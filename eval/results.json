@@ -1,0 +1,106 @@
+{
+  "version": "2.0.0",
+  "timestamp": "2026-11-10T08:32:05.533Z",
+  "totalDurationMs": 5706.24,
+  "memory": {
+    "queryCount": 7,
+    "strategies": {
+      "naive_substring_json": {
+        "recallAt1": 0.1429,
+        "recallAt3": 0.1429,
+        "mrr": 0.1429,
+        "ndcgAt3": 0.1429,
+        "avgLatencyMs": 0.08
+      },
+      "lexical_bm25_only": {
+        "recallAt1": 0.8571,
+        "recallAt3": 1,
+        "mrr": 0.9286,
+        "ndcgAt3": 0.9473,
+        "avgLatencyMs": 0.09
+      },
+      "dense_ngram_only": {
+        "recallAt1": 0.8571,
+        "recallAt3": 1,
+        "mrr": 0.9286,
+        "ndcgAt3": 0.9473,
+        "avgLatencyMs": 0.28
+      },
+      "hybrid_rrf_ebbinghaus": {
+        "recallAt1": 1,
+        "recallAt3": 1,
+        "mrr": 1,
+        "ndcgAt3": 1,
+        "avgLatencyMs": 219.59
+      }
+    },
+    "liveCrossOsClaudeMem": {
+      "latencyMs": 343.81,
+      "claudeMemHitsReturned": 1,
+      "totalResultsReturned": 5
+    }
+  },
+  "router": {
+    "totalIndexedSkills": 305,
+    "taskCount": 6,
+    "zeroShotTop1Accuracy": 0.6667,
+    "zeroShotTop3Accuracy": 0.8333,
+    "postDpoTop1Accuracy": 1,
+    "postDpoTop3Accuracy": 1,
+    "naiveAllSkillsTokens": 411750,
+    "twoStageInjectedTokens": 1200,
+    "contextTokenReductionPct": 99.71,
+    "banditRegretCurve": [
+      {
+        "round": 1,
+        "cumulativeRegret": 0.02,
+        "avgRegretPerRound": 0.02
+      },
+      {
+        "round": 5,
+        "cumulativeRegret": 1.02,
+        "avgRegretPerRound": 0.204
+      },
+      {
+        "round": 10,
+        "cumulativeRegret": 1.12,
+        "avgRegretPerRound": 0.112
+      },
+      {
+        "round": 15,
+        "cumulativeRegret": 1.22,
+        "avgRegretPerRound": 0.0813
+      },
+      {
+        "round": 20,
+        "cumulativeRegret": 1.32,
+        "avgRegretPerRound": 0.066
+      },
+      {
+        "round": 25,
+        "cumulativeRegret": 1.42,
+        "avgRegretPerRound": 0.0568
+      }
+    ]
+  },
+  "topology": {
+    "transitionsTested": 4,
+    "crossFamilyInvariantRate": 1
+  },
+  "taste": {
+    "sampleCount": 6,
+    "precision": 1,
+    "recall": 1,
+    "f1Score": 1,
+    "accuracy": 1
+  },
+  "phone": {
+    "concurrentPollsFired": 8,
+    "uncheckedTasksSeeded": 3,
+    "actualExecutionsTriggered": 3,
+    "duplicateExecutions": 0,
+    "atomicLockIntegrityPct": 100,
+    "completedTasksInFile": 4,
+    "totalStressDurationMs": 48.83
+  }
+}

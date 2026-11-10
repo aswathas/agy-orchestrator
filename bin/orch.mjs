@@ -6,6 +6,7 @@ import { startDashboardServer } from '../src/ui/server.mjs';
 import { getAgyThemesStatus, setAgyTheme } from '../src/adapters/path-bridge.mjs';
 import { parseAgentSpec } from '../src/topology/controller.mjs';
 import { runBrain } from '../src/adapters/index.mjs';
+import { OrchEvaluationSuite } from '../src/eval/benchmark.mjs';
 
 const args = process.argv.slice(2);
 const cmd = args[0] || 'status';
@@ -239,6 +240,19 @@ async function main() {
     return;
   }
 
+  if (cmd === 'eval' || cmd === 'benchmark') {
+    const suite = new OrchEvaluationSuite();
+    const { report, jsonPath, mdPath } = await suite.runAll();
+    if (hasFlag('--json')) {
+      console.log(JSON.stringify(report, null, 2));
+      return;
+    }
+    console.log(suite.formatMarkdownReport(report));
+    console.log(`Saved JSON metrics -> ${jsonPath}`);
+    console.log(`Saved Markdown report -> ${mdPath}`);
+    return;
+  }
+
   if (cmd === 'ui' || cmd === 'dashboard') {
     const port = Number(getFlag('--port', '4888'));
     const host = getFlag('--host', '0.0.0.0');
@@ -292,6 +306,7 @@ async function main() {
     '  learn ["<correction>"]                 Record feedback or inspect Thompson Bandit posteriors',
     '  theme [list|<scheme>]                  Set AGY CLI theme across WSL & Windows',
     '  phone [scan|daemon]                    Scan or watch OneDrive/Phone Inbox & ntfy.sh',
+    '  eval [--json]                          Run quantitative ablation & evaluation suite (Memory, Bandit, Topology, Taste, Phone)',
     '  ui [--port 4888]                       Start Tactical Telemetry Web Control Center + Phone Daemon',
     '  repl                                   Interactive orchestrator shell',
   ].join('\n'));

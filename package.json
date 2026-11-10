@@ -8,6 +8,8 @@
   },
   "scripts": {
     "test": "node --test test/*.test.mjs",
+    "eval": "node ./bin/orch.mjs eval",
+    "pdf": "python3 ./tools/build_whitepaper_pdf.py",
     "ui": "node ./bin/orch.mjs ui",
     "phone": "node ./bin/orch.mjs phone-daemon"
   }

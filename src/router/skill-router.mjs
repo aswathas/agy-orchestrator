@@ -9,6 +9,7 @@ const execFileAsync = promisify(execFile);
 export const SKILL_DIRS = [
   '/home/aswath/.agents/skills',
   '/home/aswath/.claude/skills',
+  '/mnt/c/Users/aswat/.claude/skills',
   '/mnt/c/Users/aswat/.claude/plugins/marketplaces/egm/skills',
 ];
 
@@ -194,8 +195,13 @@ export class SkillRouter {
       const v = vecRank.get(idx);
       const lexRrf = b.score > 0 ? 0.55 / (20 + b.rank) : 0;
       const vecRrf = 0.45 / (20 + v.rank) * Math.max(0.05, v.score);
-      const skReward = banditStats.skillRewards?.[skill.name];
-      const banditBoost = skReward ? 0.85 + 0.3 * (skReward.alpha / (skReward.alpha + skReward.beta)) : 1.0;
+      const skReward = banditStats.skillRewards?.[skill.name] || banditStats.skillRewards?.[skill.folderName];
+      const posteriorMean = skReward ? skReward.alpha / (skReward.alpha + skReward.beta) : 0.5;
+      const uses = skReward?.uses || 0;
+      const confidenceScale = Math.min(1.0, uses / 4);
+      const banditBoost = skReward
+        ? 0.75 + (0.65 + 0.6 * confidenceScale) * posteriorMean
+        : 1.0;
       const finalScore = (lexRrf + vecRrf) * banditBoost;
 
       return {
