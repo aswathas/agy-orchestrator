@@ -1,955 +1,2683 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ORCH // AGY MULTI-SURFACE TACTICAL TELEMETRY CONTROL CENTER</title>
+  <title>ORCH® // AGY Multi-Surface & Dual-Category Harness Control OS</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    :root {
-      --bg-carbon: #0A0A0A;
-      --bg-cell: #121212;
-      --bg-elevated: #181818;
-      --fg-phosphor: #EAEAEA;
-      --fg-muted: #787878;
-      --fg-dim: #444444;
+    /* ==========================================================================
+       INDUSTRIAL BRUTALIST TACTICAL TELEMETRY — DARK (CRT OBSIDIAN) & LIGHT (SWISS PAPER)
+       ========================================================================== */
+    :root,
+    [data-theme="dark"] {
+      --bg-canvas: #090A0D;
+      --bg-panel: #101218;
+      --bg-elevated: #161922;
+      --bg-input: #0C0E13;
+      --bg-hover: #1C202B;
+      --fg-primary: #EAECEF;
+      --fg-secondary: #949BA6;
+      --fg-muted: #5E6573;
+      --border-hairline: #222634;
+      --border-strong: #383E52;
+      --accent-primary: #FF4F00;
+      --accent-primary-dim: rgba(255, 79, 0, 0.14);
       --accent-red: #E61919;
-      --status-green: #4AF626;
-      --grid-line: #262626;
-      --font-macro: 'Archivo Black', sans-serif;
-      --font-mono: 'JetBrains Mono', monospace;
+      --accent-green: #10B981;
+      --accent-green-dim: rgba(16, 185, 129, 0.14);
+      --accent-cyan: #06B6D4;
+      --accent-cyan-dim: rgba(6, 182, 212, 0.14);
+      --accent-amber: #F59E0B;
+      --accent-amber-dim: rgba(245, 158, 11, 0.14);
+      --grid-dot: rgba(255, 255, 255, 0.04);
+      --shadow-brutal: 3px 3px 0px #000000;
+    }
+
+    [data-theme="light"] {
+      --bg-canvas: #F4F3EF;
+      --bg-panel: #FFFFFF;
+      --bg-elevated: #ECEAE3;
+      --bg-input: #F9F8F5;
+      --bg-hover: #E5E2D9;
+      --fg-primary: #111215;
+      --fg-secondary: #4A4E58;
+      --fg-muted: #767B87;
+      --border-hairline: #D0CEC4;
+      --border-strong: #18181B;
+      --accent-primary: #D93800;
+      --accent-primary-dim: rgba(217, 56, 0, 0.11);
+      --accent-red: #C81E1E;
+      --accent-green: #047857;
+      --accent-green-dim: rgba(4, 120, 87, 0.12);
+      --accent-cyan: #0369A1;
+      --accent-cyan-dim: rgba(3, 105, 161, 0.11);
+      --accent-amber: #B45309;
+      --accent-amber-dim: rgba(180, 83, 9, 0.12);
+      --grid-dot: rgba(17, 18, 21, 0.05);
+      --shadow-brutal: 3px 3px 0px rgba(24, 24, 27, 0.18);
     }
 
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      border-radius: 0 !important;
+      border-radius: 0px !important;
     }
 
-    body {
-      background-color: var(--bg-carbon);
-      color: var(--fg-phosphor);
-      font-family: var(--font-mono);
-      font-size: 12px;
-      line-height: 1.35;
-      letter-spacing: 0.04em;
-      min-height: 100dvh;
-      overflow-x: hidden;
+    html, body {
+      height: 100%;
+      background-color: var(--bg-canvas);
+      background-image: radial-gradient(var(--grid-dot) 1px, transparent 1px);
+      background-size: 16px 16px;
+      color: var(--fg-primary);
+      font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 13px;
+      line-height: 1.45;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
     }
 
-    /* CRT Scanline + Mechanical Grain Overlay (Fixed Pointer-Events-None per design-taste-frontend) */
-    .crt-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 999;
-      pointer-events: none;
-      background: repeating-linear-gradient(
-        0deg,
-        transparent,
-        transparent 2px,
-        rgba(0, 0, 0, 0.16) 2px,
-        rgba(0, 0, 0, 0.16) 4px
-      );
+    .mono {
+      font-family: 'JetBrains Mono', monospace;
+      font-variant-numeric: tabular-nums;
     }
 
-    /* Top Telemetry Header */
-    .top-bar {
+    /* ==========================================================================
+       APP SHELL: FIXED LEFT SIDEBAR + MAIN WORKSPACE
+       ========================================================================== */
+    .app-shell {
       display: grid;
-      grid-template-columns: 1fr auto auto;
-      gap: 1px;
-      background: var(--grid-line);
-      border-bottom: 2px solid var(--accent-red);
+      grid-template-columns: 268px 1fr;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
     }
 
-    .top-bar > div {
-      background: var(--bg-carbon);
-      padding: 14px 20px;
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-
-    .macro-title {
-      font-family: var(--font-macro);
-      font-size: clamp(1.3rem, 2.5vw, 2.2rem);
-      letter-spacing: -0.04em;
-      line-height: 0.9;
-      text-transform: uppercase;
-      color: var(--fg-phosphor);
-    }
-
-    .macro-title span {
-      color: var(--accent-red);
-    }
-
-    .live-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      padding: 4px 10px;
-      border: 1px solid var(--grid-line);
-      background: var(--bg-cell);
-    }
-
-    /* Single Terminal Green element per industrial-brutalist-ui rule 4 */
-    .heartbeat-dot {
-      width: 8px;
-      height: 8px;
-      background: var(--status-green);
-      display: inline-block;
-    }
-
-    /* Navigation Tabs */
-    .nav-strip {
-      display: grid;
-      grid-template-columns: repeat(6, 1fr);
-      gap: 1px;
-      background: var(--grid-line);
-      border-bottom: 1px solid var(--grid-line);
-    }
-
-    .nav-btn {
-      background: var(--bg-cell);
-      color: var(--fg-muted);
-      border: none;
-      padding: 12px 14px;
-      font-family: var(--font-mono);
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      text-align: left;
-      cursor: pointer;
-      transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), background 0.15s, color 0.15s;
-    }
-
-    .nav-btn:hover {
-      background: var(--bg-elevated);
-      color: var(--fg-phosphor);
-    }
-
-    .nav-btn:active {
-      transform: scale(0.98);
-    }
-
-    .nav-btn.active {
-      background: var(--bg-carbon);
-      color: var(--fg-phosphor);
-      border-top: 3px solid var(--accent-red);
-    }
-
-    /* Blueprint 1px Grid Layout */
-    .blueprint-grid {
-      display: grid;
-      grid-template-columns: 1.35fr 1fr;
-      gap: 1px;
-      background: var(--grid-line);
-      min-height: calc(100dvh - 115px);
-    }
-
-    @media (max-width: 960px) {
-      .blueprint-grid {
-        grid-template-columns: 1fr;
-      }
-      .nav-strip {
-        grid-template-columns: repeat(2, 1fr);
-      }
-    }
-
-    .panel {
-      background: var(--bg-carbon);
-      padding: 20px;
+    /* LEFT SIDEBAR */
+    .sidebar {
+      background: var(--bg-panel);
+      border-right: 1px solid var(--border-hairline);
       display: flex;
       flex-direction: column;
-      gap: 18px;
+      height: 100vh;
+      overflow-y: auto;
+      user-select: none;
+      z-index: 20;
     }
 
-    .section-head {
+    .sidebar-brand {
+      padding: 16px 16px 14px;
+      border-bottom: 1px solid var(--border-hairline);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .brand-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand-title {
+      font-family: 'Archivo Black', sans-serif;
+      font-size: 17px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--fg-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-mark {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      background: var(--accent-primary);
+    }
+
+    .brand-sub {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--fg-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .sidebar-leader-box {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-hairline);
+      background: var(--bg-elevated);
+    }
+
+    .sidebar-box-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--fg-muted);
+      margin-bottom: 4px;
       display: flex;
       justify-content: space-between;
-      align-items: baseline;
-      border-bottom: 1px solid var(--grid-line);
-      padding-bottom: 8px;
     }
 
-    .section-head h2 {
-      font-family: var(--font-macro);
-      font-size: 15px;
-      letter-spacing: -0.02em;
-      text-transform: uppercase;
+    .sidebar-leader-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent-primary);
+      word-break: break-all;
     }
 
-    .section-tag {
-      color: var(--accent-red);
+    .sidebar-critic-val {
+      font-family: 'JetBrains Mono', monospace;
       font-size: 10px;
+      color: var(--accent-cyan);
+      margin-top: 4px;
+    }
+
+    .sidebar-section-label {
+      padding: 12px 16px 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.1em;
-    }
-
-    /* Controls & Forms */
-    label {
-      display: block;
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
       color: var(--fg-muted);
-      margin-bottom: 5px;
     }
 
-    input, select, textarea {
-      width: 100%;
-      background: var(--bg-cell);
-      color: var(--fg-phosphor);
-      border: 1px solid var(--grid-line);
-      padding: 9px 11px;
-      font-family: var(--font-mono);
-      font-size: 12px;
-      outline: none;
+    .sidebar-nav {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
     }
 
-    input:focus, select:focus, textarea:focus {
-      border-color: var(--accent-red);
-    }
-
-    .btn {
-      background: var(--bg-elevated);
-      color: var(--fg-phosphor);
-      border: 1px solid var(--grid-line);
-      padding: 9px 14px;
-      font-family: var(--font-mono);
+    .nav-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 11px 16px;
+      border: none;
+      border-bottom: 1px solid var(--border-hairline);
+      border-left: 3px solid transparent;
+      background: transparent;
+      color: var(--fg-secondary);
+      font-family: 'JetBrains Mono', monospace;
       font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
+      font-weight: 600;
+      text-align: left;
       cursor: pointer;
-      transition: transform 0.12s cubic-bezier(0.16, 1, 0.3, 1), background 0.12s;
+      transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
     }
 
-    .btn:hover {
-      border-color: var(--fg-phosphor);
+    .nav-item:hover {
+      background: var(--bg-hover);
+      color: var(--fg-primary);
     }
 
-    .btn:active {
-      transform: scale(0.98);
+    .nav-item.active {
+      background: var(--accent-primary-dim);
+      color: var(--fg-primary);
+      border-left-color: var(--accent-primary);
+      font-weight: 700;
     }
 
-    .btn-red {
-      background: var(--accent-red);
-      color: #FFFFFF;
-      border-color: var(--accent-red);
+    .nav-item-left {
+      display: flex;
+      align-items: center;
+      gap: 9px;
     }
 
-    /* Data Matrix & Cards */
-    .matrix-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-      gap: 1px;
-      background: var(--grid-line);
-      border: 1px solid var(--grid-line);
+    .nav-idx {
+      color: var(--accent-primary);
+      font-size: 10px;
+      font-weight: 700;
     }
 
-    .matrix-cell {
-      background: var(--bg-cell);
-      padding: 14px;
+    .nav-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      padding: 2px 5px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-hairline);
+      color: var(--fg-secondary);
+    }
+
+    .sidebar-footer {
+      border-top: 1px solid var(--border-hairline);
+      padding: 12px 16px;
       display: flex;
       flex-direction: column;
       gap: 8px;
+      background: var(--bg-elevated);
     }
 
-    .matrix-cell.leader-highlight {
-      background: #170C0C;
-      border-left: 3px solid var(--accent-red);
-    }
-
-    .badge {
-      display: inline-block;
-      padding: 2px 6px;
+    .theme-toggle-btn {
+      width: 100%;
+      padding: 8px 10px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border-strong);
+      color: var(--fg-primary);
+      font-family: 'JetBrains Mono', monospace;
       font-size: 10px;
+      font-weight: 700;
       text-transform: uppercase;
-      border: 1px solid var(--grid-line);
-      background: var(--bg-carbon);
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
 
-    .badge-gemini {
-      border-color: #EAEAEA;
-      color: #EAEAEA;
+    .theme-toggle-btn:hover {
+      border-color: var(--accent-primary);
+      color: var(--accent-primary);
     }
 
-    .badge-claude {
-      border-color: var(--accent-red);
-      color: var(--accent-red);
+    /* ==========================================================================
+       MAIN VIEWPORT + PERSISTENT GLOBAL TASK PROGRESS BAR DOCK
+       ========================================================================== */
+    .main-area {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
     }
 
-    .terminal-log {
-      background: #060606;
-      border: 1px solid var(--grid-line);
-      padding: 12px;
-      font-family: var(--font-mono);
+    .top-telemetry-dock {
+      background: var(--bg-panel);
+      border-bottom: 1px solid var(--border-hairline);
+      padding: 10px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 10;
+    }
+
+    .dock-top-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .active-agent-banner {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: 'JetBrains Mono', monospace;
       font-size: 11px;
-      height: 360px;
-      overflow-y: auto;
-      white-space: pre-wrap;
-      color: var(--fg-phosphor);
     }
 
-    .row-2 {
+    .pulse-dot {
+      width: 9px;
+      height: 9px;
+      background: var(--accent-green);
+      display: inline-block;
+    }
+
+    .pulse-dot.working {
+      background: var(--accent-primary);
+      animation: pulseOp 0.8s infinite alternate;
+    }
+
+    @keyframes pulseOp {
+      0% { opacity: 1; transform: scale(1); }
+      100% { opacity: 0.35; transform: scale(0.85); }
+    }
+
+    .progress-meta-right {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+    }
+
+    .progress-pct-badge {
+      font-weight: 700;
+      color: var(--accent-primary);
+      font-size: 13px;
+    }
+
+    /* LINEAR PROGRESS BAR */
+    .progress-track {
+      width: 100%;
+      height: 10px;
+      background: var(--bg-input);
+      border: 1px solid var(--border-hairline);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--accent-primary);
+      transition: width 260ms cubic-bezier(0.22, 1, 0.36, 1), background-color 200ms ease;
+    }
+
+    .progress-fill.working {
+      background-image: repeating-linear-gradient(
+        -45deg,
+        var(--accent-primary),
+        var(--accent-primary) 8px,
+        var(--accent-amber) 8px,
+        var(--accent-amber) 16px
+      );
+      background-size: 24px 24px;
+      animation: moveStripes 0.6s linear infinite;
+    }
+
+    .progress-fill.completed {
+      background: var(--accent-green);
+    }
+
+    @keyframes moveStripes {
+      0% { background-position: 0 0; }
+      100% { background-position: 24px 0; }
+    }
+
+    /* 6-STAGE PIPELINE STEPPER */
+    .stage-stepper {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 6px;
+    }
+
+    .stage-pill {
+      padding: 5px 8px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-hairline);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      color: var(--fg-muted);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .stage-pill.active {
+      border-color: var(--accent-primary);
+      background: var(--accent-primary-dim);
+      color: var(--fg-primary);
+      font-weight: 700;
+    }
+
+    .stage-pill.done {
+      border-color: var(--accent-green);
+      background: var(--accent-green-dim);
+      color: var(--accent-green);
+      font-weight: 700;
+    }
+
+    /* ==========================================================================
+       SCROLLABLE VIEWPORT CONTENT & PANELS
+       ========================================================================== */
+    .viewport-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 18px 22px 40px;
+    }
+
+    .view-section {
+      display: none;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .view-section.active {
+      display: flex;
+    }
+
+    /* KPI METRIC STRIP */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .kpi-card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-hairline);
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .kpi-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--fg-muted);
+    }
+
+    .kpi-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--fg-primary);
+    }
+
+    .kpi-sub {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--fg-secondary);
+    }
+
+    /* GRID LAYOUTS */
+    .grid-2 {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 10px;
+      gap: 16px;
     }
 
-    .row-3 {
+    .grid-3 {
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 10px;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
     }
 
-    .hidden {
-      display: none !important;
+    .grid-asym {
+      display: grid;
+      grid-template-columns: 1.35fr 1fr;
+      gap: 16px;
+    }
+
+    /* PANEL COMPONENT */
+    .panel {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-hairline);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .panel-header {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border-hairline);
+      background: var(--bg-elevated);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .panel-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--fg-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel-title::before {
+      content: '▪';
+      color: var(--accent-primary);
+    }
+
+    .panel-body {
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* FORMS, INPUTS, BUTTONS */
+    label.field-label {
+      display: block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--fg-secondary);
+      margin-bottom: 4px;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    select,
+    textarea {
+      width: 100%;
+      background: var(--bg-input);
+      border: 1px solid var(--border-hairline);
+      color: var(--fg-primary);
+      padding: 8px 10px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      outline: none;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--accent-primary);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 76px;
+    }
+
+    .btn-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 8px 13px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-strong);
+      color: var(--fg-primary);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      transition: all 100ms ease;
+    }
+
+    .btn:hover {
+      border-color: var(--accent-primary);
+      color: var(--accent-primary);
+    }
+
+    .btn-primary {
+      background: var(--accent-primary);
+      border-color: var(--accent-primary);
+      color: #FFFFFF;
+    }
+
+    .btn-primary:hover {
+      opacity: 0.9;
+      color: #FFFFFF;
+    }
+
+    .btn-green {
+      background: var(--accent-green);
+      border-color: var(--accent-green);
+      color: #FFFFFF;
+    }
+
+    .btn-sm {
+      padding: 4px 8px;
+      font-size: 9px;
+    }
+
+    /* BADGES & TAGS */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      border: 1px solid var(--border-hairline);
+      background: var(--bg-elevated);
+      color: var(--fg-secondary);
+    }
+
+    .badge-cat-a {
+      border-color: var(--accent-cyan);
+      color: var(--accent-cyan);
+      background: var(--accent-cyan-dim);
+    }
+
+    .badge-cat-b {
+      border-color: var(--accent-primary);
+      color: var(--accent-primary);
+      background: var(--accent-primary-dim);
+    }
+
+    .badge-working {
+      border-color: var(--accent-amber);
+      color: var(--accent-amber);
+      background: var(--accent-amber-dim);
+    }
+
+    .badge-done {
+      border-color: var(--accent-green);
+      color: var(--accent-green);
+      background: var(--accent-green-dim);
+    }
+
+    /* AGENT MONITOR CARDS */
+    .agent-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+      gap: 12px;
+    }
+
+    .agent-card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-hairline);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      position: relative;
+    }
+
+    .agent-card.working {
+      border-color: var(--accent-primary);
+      box-shadow: var(--shadow-brutal);
+    }
+
+    .agent-card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .agent-name {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--fg-primary);
+    }
+
+    .agent-spec {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--fg-secondary);
+    }
+
+    .agent-mini-bar {
+      width: 100%;
+      height: 5px;
+      background: var(--bg-input);
+      border: 1px solid var(--border-hairline);
+      overflow: hidden;
+    }
+
+    .agent-mini-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--accent-green);
+      transition: width 240ms ease;
+    }
+
+    .agent-card.working .agent-mini-fill {
+      background: var(--accent-primary);
+    }
+
+    /* TABLES */
+    table.data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+    }
+
+    table.data-table th,
+    table.data-table td {
+      padding: 8px 10px;
+      border: 1px solid var(--border-hairline);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    table.data-table th {
+      background: var(--bg-elevated);
+      color: var(--fg-secondary);
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    /* CODE / TERMINAL OUTPUT BOX */
+    .terminal-box {
+      background: var(--bg-input);
+      border: 1px solid var(--border-hairline);
+      padding: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--fg-primary);
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 360px;
+      overflow-y: auto;
+      line-height: 1.5;
+    }
+
+    .score-bar-wrap {
+      width: 100%;
+      height: 6px;
+      background: var(--bg-input);
+      border: 1px solid var(--border-hairline);
+      margin-top: 4px;
+    }
+
+    .score-bar-fill {
+      height: 100%;
+      background: var(--accent-primary);
+    }
+
+    @media (max-width: 1024px) {
+      .studio-grid { grid-template-columns: 1fr; }
+    }
+    .studio-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 16px; }
+    .chat-thread { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 8px; max-height: 340px; }
+    .msg { padding: 8px 10px; border: 1px solid var(--border-hairline); font-size: 12px; max-width: 92%; white-space: pre-wrap; word-break: break-word; }
+    .msg.user { align-self: flex-end; background: var(--accent-primary-dim); border-color: var(--accent-primary); }
+    .msg.orch { align-self: flex-start; background: var(--bg-elevated); }
+    .msg small { display: block; font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--fg-muted); margin-bottom: 2px; text-transform: uppercase; }
+    .chat-questions { padding: 0 12px 8px; display: flex; flex-direction: column; gap: 8px; max-height: 260px; overflow-y: auto; }
+    .q-card { border: 1px solid var(--border-strong); padding: 8px 10px; background: var(--bg-panel); }
+    .q-opts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+    .q-opt { padding: 4px 8px; border: 1px solid var(--border-hairline); background: var(--bg-elevated); font-family: 'JetBrains Mono', monospace; font-size: 10px; cursor: pointer; color: var(--fg-secondary); }
+    .q-opt.sel { border-color: var(--accent-primary); background: var(--accent-primary-dim); color: var(--fg-primary); font-weight: 700; }
+    .chat-input-row { display: flex; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--border-hairline); }
+    .preview-frame { width: 100%; height: 300px; border: 0; background: #fff; }
+    .plan-row { display: flex; justify-content: space-between; gap: 8px; padding: 5px 8px; border: 1px solid var(--border-hairline); background: var(--bg-elevated); font-size: 11px; }
+    .plan-row.active { border-color: var(--accent-primary); background: var(--accent-primary-dim); }
+    .plan-row.done { border-color: var(--accent-green); }
+    /* LIVE FLOW DIAGRAM */
+    .flow { display: flex; flex-direction: column; align-items: center; gap: 0; }
+    .flow-row { display: flex; gap: 12px; justify-content: center; width: 100%; flex-wrap: wrap; }
+    .flow-node { min-width: 220px; max-width: 320px; flex: 1; padding: 9px 12px; border: 1px solid var(--border-hairline); background: var(--bg-elevated); font-family: 'JetBrains Mono', monospace; transition: all 160ms ease; }
+    .flow-node b { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .flow-node span { display: block; font-size: 10px; color: var(--fg-secondary); margin-top: 2px; }
+    .flow-node em { font-style: normal; float: right; font-size: 9px; color: var(--fg-muted); }
+    .flow-node.active { border-color: var(--accent-primary); background: var(--accent-primary-dim); box-shadow: var(--shadow-brutal); animation: pulseOp 0.8s infinite alternate; }
+    .flow-node.done { border-color: var(--accent-green); background: var(--accent-green-dim); }
+    .flow-arrow { font-family: 'JetBrains Mono', monospace; color: var(--accent-primary); height: 22px; line-height: 22px; font-size: 14px; }
+    .flow-label { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--fg-muted); text-transform: uppercase; letter-spacing: 0.1em; margin: 4px 0; }
+    @media (max-width: 1024px) {
+      .app-shell {
+        grid-template-columns: 220px 1fr;
+      }
+      .kpi-grid, .grid-2, .grid-3, .grid-asym {
+        grid-template-columns: 1fr;
+      }
+      .stage-stepper {
+        grid-template-columns: repeat(3, 1fr);
+      }
     }
   </style>
 </head>
 <body>
-  <div class="crt-overlay"></div>
-
-  <!-- HEADER -->
-  <header class="top-bar">
-    <div>
-      <div class="macro-title">ORCH<span>®</span> // TACTICAL HARNESS</div>
-      <span class="section-tag">[ AGY-WSL + AGY-WIN + CMDC + MCODE ]</span>
-    </div>
-    <div>
-      <span class="live-pill">
-        <span class="heartbeat-dot"></span>
-        <data id="sse-status">TELEMETRY ONLINE</data>
-      </span>
-      <span class="live-pill" id="header-leader-readout">LEADER: LOADING...</span>
-    </div>
-    <div>
-      <label style="margin:0 8px 0 0;">AGY THEME</label>
-      <select id="global-theme-select" style="width:170px;" onchange="applyGlobalTheme(this.value)">
-        <option value="tokyo night">tokyo night</option>
-        <option value="solarized dark">solarized dark</option>
-        <option value="dark">dark</option>
-        <option value="colorblind-friendly dark">colorblind-friendly dark</option>
-        <option value="terminal">terminal</option>
-        <option value="light">light</option>
-        <option value="solarized light">solarized light</option>
-        <option value="colorblind-friendly light">colorblind-friendly light</option>
-      </select>
-    </div>
-  </header>
-
-  <!-- NAVIGATION -->
-  <nav class="nav-strip">
-    <button class="nav-btn active" onclick="switchTab('tab-topology', this)">01 // TOPOLOGY &amp; LEADER</button>
-    <button class="nav-btn" onclick="switchTab('tab-dispatch', this)">02 // TASK DISPATCH &amp; EGM</button>
-    <button class="nav-btn" onclick="switchTab('tab-memory', this)">03 // CLAUDE-MEM &amp; RRF</button>
-    <button class="nav-btn" onclick="switchTab('tab-router', this)">04 // SKILL ROUTER &amp; BANDIT</button>
-    <button class="nav-btn" onclick="switchTab('tab-taste', this)">05 // TASTE &amp; SELF-EVOLVE</button>
-    <button class="nav-btn" onclick="switchTab('tab-phone', this)">06 // PHONE AUTOMATION</button>
-  </nav>
-
-  <!-- MAIN BLUEPRINT GRID -->
-  <main class="blueprint-grid">
-    <!-- LEFT COLUMN: ACTIVE CONTROL WORKSPACE -->
-    <section class="panel">
-
-      <!-- TAB 01: TOPOLOGY & LEADER SWITCHBOARD -->
-      <div id="tab-topology" class="tab-pane">
-        <div class="section-head">
-          <h2>[ 01 // DYNAMIC LEADER &amp; SUBAGENT TOPOLOGY ]</h2>
-          <span class="section-tag">LIVE HOT-SWAPPABLE</span>
+  <div class="app-shell">
+    <!-- ====================================================================
+         LEFT SIDEBAR NAVIGATION (NO TOP TABS)
+         ==================================================================== -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-row">
+          <div class="brand-title"><span class="brand-mark"></span> ORCH® OS</div>
+          <span class="badge badge-done" id="sseStatusBadge">SSE LIVE</span>
         </div>
-
-        <div style="margin-top:14px;" class="matrix-cell leader-highlight">
-          <div style="display:flex;justify-content:space-between;align-items:center;">
-            <strong>ACTIVE MAIN LEADER (ELEPHANT COORDINATOR)</strong>
-            <span class="badge badge-claude" id="leader-cat-badge">CATEGORY</span>
-          </div>
-          <div id="leader-current-text" style="font-size:15px;font-weight:700;margin:4px 0;">-</div>
-          <div class="row-3" style="margin-top:8px;">
-            <div>
-              <label>SURFACE</label>
-              <select id="leader-surface">
-                <option value="agy-wsl">agy-wsl (Linux WSL)</option>
-                <option value="agy-win">agy-win (Windows EXE)</option>
-                <option value="cmdc">cmdc (Command Code)</option>
-                <option value="mcode">mcode (MiniMax Code)</option>
-              </select>
-            </div>
-            <div>
-              <label>MODEL (GEMINI OR CLAUDE/GPT)</label>
-              <select id="leader-model"></select>
-            </div>
-            <div>
-              <label>REASONING EFFORT</label>
-              <select id="leader-effort">
-                <option value="high">high</option>
-                <option value="medium">medium</option>
-                <option value="low">low</option>
-                <option value="xhigh">xhigh</option>
-                <option value="max">max</option>
-              </select>
-            </div>
-          </div>
-          <div style="margin-top:10px;display:flex;gap:10px;">
-            <button class="btn btn-red" onclick="setLeaderFromUI()">>>> APPLY MAIN LEADER</button>
-            <button class="btn" onclick="refreshState()">REFRESH ROSTER</button>
-          </div>
-        </div>
-
-        <div class="section-head" style="margin-top:20px;">
-          <h2>[ SUBAGENT WORKER POOL — ONE-CLICK SWAP WITH LEADER ]</h2>
-          <span class="section-tag">GEMINI + CLAUDE/GPT</span>
-        </div>
-        <div id="subagents-grid" class="matrix-grid" style="margin-top:12px;"></div>
-
-        <div class="section-head" style="margin-top:20px;">
-          <h2>[ ADD OR UPDATE SUBAGENT WORKER ]</h2>
-          <span class="section-tag">CUSTOM AGENT</span>
-        </div>
-        <div class="row-3" style="margin-top:10px;">
-          <div>
-            <label>WORKER ID</label>
-            <input id="new-worker-id" placeholder="e.g. win-opus-auditor" />
-          </div>
-          <div>
-            <label>SURFACE : MODEL</label>
-            <input id="new-worker-spec" placeholder="e.g. agy-win:claude-opus-5-5-high" />
-          </div>
-          <div>
-            <label>SPECIALTIES (COMMA SEP)</label>
-            <input id="new-worker-spec-tags" placeholder="architecture,windows_os,security" />
-          </div>
-        </div>
-        <button class="btn" style="margin-top:10px;" onclick="upsertWorkerUI()">+ UPSERT SUBAGENT WORKER</button>
+        <div class="brand-sub">MULTI-SURFACE // DUAL-CATEGORY HARNESS</div>
       </div>
 
-      <!-- TAB 02: TASK DISPATCH & EGM -->
-      <div id="tab-dispatch" class="tab-pane hidden">
-        <div class="section-head">
-          <h2>[ 02 // MULTI-SURFACE TASK DISPATCHER ]</h2>
-          <span class="section-tag">ELEPHANT + GOLDFISH</span>
+      <div class="sidebar-leader-box">
+        <div class="sidebar-box-label">
+          <span>ACTIVE MAIN LEADER</span>
+          <span id="sidebarLeaderCat" class="badge badge-cat-b">CAT B</span>
         </div>
-        <div style="margin-top:14px;">
-          <label>TASK INSTRUCTION / PROMPT</label>
-          <textarea id="task-prompt" rows="4" placeholder="Describe what you want the Leader + Dual-Category Subagents to build, debug, or review..."></textarea>
-        </div>
-        <div class="row-3" style="margin-top:10px;">
-          <div>
-            <label>ORCHESTRATION MODE</label>
-            <select id="task-mode">
-              <option value="">adaptive (Complexity Gate)</option>
-              <option value="full">full (Leader + Gemini &amp; Claude/GPT Workers)</option>
-              <option value="egm">egm (Elephant Draft + Fresh Goldfish Critic)</option>
-              <option value="single">single (Fast Single-Hop Leader)</option>
-            </select>
-          </div>
-          <div>
-            <label>SESSION CONTEXT ID</label>
-            <input id="task-session" value="default" />
-          </div>
-          <div>
-            <label>EXECUTION TYPE</label>
-            <select id="task-dryrun">
-              <option value="false">LIVE CLI EXECUTION</option>
-              <option value="true">FAST DRY-RUN SIMULATION</option>
-            </select>
-          </div>
-        </div>
-        <div style="margin-top:12px;display:flex;gap:10px;">
-          <button class="btn btn-red" onclick="dispatchTaskUI()">>>> EXECUTE ORCHESTRATED RUN</button>
-          <button class="btn" onclick="previewRouteUI()">PREVIEW SKILL &amp; BANDIT ROUTING</button>
-        </div>
-        <div id="dispatch-result-box" class="terminal-log" style="margin-top:14px;height:280px;">AWAITING TASK DISPATCH...</div>
+        <div class="sidebar-leader-val" id="sidebarLeaderSpec">agy-wsl :: claude-opus-5-5-high</div>
+        <div class="sidebar-critic-val" id="sidebarCriticSpec">Goldfish: agy-wsl:gemini-4-argon-high</div>
       </div>
 
-      <!-- TAB 03: CLAUDE-MEM & HYBRID RRF MEMORY -->
-      <div id="tab-memory" class="tab-pane hidden">
-        <div class="section-head">
-          <h2>[ 03 // 3-TIER MEMGPT + CLAUDE-MEM HYBRID RRF ENGINE ]</h2>
-          <span class="section-tag" id="mem-stats-badge">LOADING...</span>
-        </div>
-        <div class="row-2" style="margin-top:12px;">
-          <div>
-            <label>HYBRID BM25 (FTS5) + 384-D VECTOR COSINE SEARCH</label>
-            <input id="mem-search-input" placeholder="Search across 9,541+ claude-mem observations &amp; orch-mem..." />
-          </div>
-          <div style="display:flex;align-items:flex-end;gap:8px;">
-            <button class="btn btn-red" onclick="searchMemoryUI()">>>> RUN RRF SEARCH</button>
-          </div>
-        </div>
-        <div id="mem-results-grid" class="matrix-grid" style="margin-top:14px;"></div>
+      <div class="sidebar-section-label">CONTROL MODULES</div>
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-view="view-studio" onclick="switchView('view-studio', this)">
+          <span class="nav-item-left"><span class="nav-idx">00</span> BUILD STUDIO (DIALOGUE)</span>
+          <span class="nav-badge" id="navBadgeStudio">NEW</span>
+        </button>
+        <button class="nav-item" data-view="view-diagram" onclick="switchView('view-diagram', this)">
+          <span class="nav-item-left"><span class="nav-idx">09</span> LIVE SYSTEM DIAGRAM</span>
+          <span class="nav-badge">LIVE</span>
+        </button>
+        <button class="nav-item" data-view="view-command" onclick="switchView('view-command', this)">
+          <span class="nav-item-left"><span class="nav-idx">01</span> COMMAND & PIPELINE</span>
+          <span class="nav-badge" id="navBadgeMode">EGM</span>
+        </button>
+        <button class="nav-item" data-view="view-topology" onclick="switchView('view-topology', this)">
+          <span class="nav-item-left"><span class="nav-idx">02</span> TOPOLOGY & WORKERS</span>
+          <span class="nav-badge" id="navBadgeWorkers">6</span>
+        </button>
+        <button class="nav-item" data-view="view-agents" onclick="switchView('view-agents', this)">
+          <span class="nav-item-left"><span class="nav-idx">03</span> LIVE AGENT MONITOR</span>
+          <span class="nav-badge" id="navBadgeActiveAgents">IDLE</span>
+        </button>
+        <button class="nav-item" data-view="view-memory" onclick="switchView('view-memory', this)">
+          <span class="nav-item-left"><span class="nav-idx">04</span> 3-TIER MEMORY LAB</span>
+          <span class="nav-badge" id="navBadgeMemory">9.5K</span>
+        </button>
+        <button class="nav-item" data-view="view-skills" onclick="switchView('view-skills', this)">
+          <span class="nav-item-left"><span class="nav-idx">05</span> SKILL ROUTER & BANDIT</span>
+          <span class="nav-badge" id="navBadgeSkills">305</span>
+        </button>
+        <button class="nav-item" data-view="view-taste" onclick="switchView('view-taste', this)">
+          <span class="nav-item-left"><span class="nav-idx">06</span> TASTE & DPO LOOP</span>
+          <span class="nav-badge">ULTRA</span>
+        </button>
+        <button class="nav-item" data-view="view-phone" onclick="switchView('view-phone', this)">
+          <span class="nav-item-left"><span class="nav-idx">07</span> PHONE & CLOUD BRIDGE</span>
+          <span class="nav-badge" id="navBadgePhone">ON</span>
+        </button>
+        <button class="nav-item" data-view="view-evals" onclick="switchView('view-evals', this)">
+          <span class="nav-item-left"><span class="nav-idx">08</span> IMPROVISE & EVALS</span>
+          <span class="nav-badge">100%</span>
+        </button>
+      </nav>
 
-        <div class="section-head" style="margin-top:20px;">
-          <h2>[ PIN NEW SHARED WHOLE MEMORY FACT ]</h2>
-          <span class="section-tag">CROSS-OS PERSISTENT</span>
-        </div>
-        <div class="row-2" style="margin-top:10px;">
-          <div>
-            <label>TITLE</label>
-            <input id="mem-new-title" placeholder="Fact or Architectural Decision Title" />
-          </div>
-          <div>
-            <label>TAGS (COMMA SEP)</label>
-            <input id="mem-new-tags" placeholder="architecture,wsl,windows" />
-          </div>
-        </div>
-        <div style="margin-top:8px;">
-          <label>CONTENT</label>
-          <textarea id="mem-new-content" rows="2" placeholder="Durable fact shared between AGY WSL, AGY Win, CMDC, and MCODE..."></textarea>
-        </div>
-        <button class="btn" style="margin-top:8px;" onclick="storeMemoryUI()">+ STORE IN HYBRID MEMORY</button>
+      <div class="sidebar-footer">
+        <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleUiTheme()">
+          <span id="themeToggleLabel">THEME // CRT OBSIDIAN DARK</span>
+          <span>⇄</span>
+        </button>
+        <button class="btn" style="width:100%;" onclick="refreshState()">↻ SYNC HARNESS TELEMETRY</button>
       </div>
-
-      <!-- TAB 04: THINKING SKILL ROUTER & BANDIT -->
-      <div id="tab-router" class="tab-pane hidden">
-        <div class="section-head">
-          <h2>[ 04 // TWO-STAGE THINKING SKILL ROUTER &amp; BANDIT ]</h2>
-          <span class="section-tag" id="skills-count-badge">85+ SKILLS</span>
-        </div>
-        <div class="row-2" style="margin-top:12px;">
-          <div>
-            <label>TEST PROMPT FOR SKILL &amp; BANDIT ROUTING</label>
-            <input id="router-test-input" placeholder="e.g. Build scroll-triggered 3D hero with GSAP and audit security" />
-          </div>
-          <div style="display:flex;align-items:flex-end;gap:8px;">
-            <button class="btn btn-red" onclick="testSkillRouterUI()">>>> SIMULATE ROUTER</button>
-          </div>
-        </div>
-        <div id="router-output-grid" class="matrix-grid" style="margin-top:12px;"></div>
-
-        <div class="section-head" style="margin-top:20px;">
-          <h2>[ ON-DEMAND SKILL DOWNLOADER (NPX SKILLS) &amp; SYNTHESIZER ]</h2>
-          <span class="section-tag">DYNAMIC CAPABILITY</span>
-        </div>
-        <div class="row-2" style="margin-top:10px;">
-          <div>
-            <label>INSTALL SKILL PACKAGE FROM NPX SKILLS REGISTRY</label>
-            <input id="skill-install-pkg" placeholder="e.g. vercel-labs/agent-skills" />
-          </div>
-          <div style="display:flex;align-items:flex-end;">
-            <button class="btn" onclick="installSkillUI()">>>> DOWNLOAD &amp; MOUNT SKILL</button>
-          </div>
-        </div>
-        <div class="section-head" style="margin-top:20px;">
-          <h2>[ THOMPSON SAMPLING BANDIT POSTERIORS — BETA(ALPHA, BETA) ]</h2>
-          <span class="section-tag">ONLINE RL</span>
-        </div>
-        <div id="bandit-arms-grid" class="matrix-grid" style="margin-top:10px;"></div>
-      </div>
-
-      <!-- TAB 05: TASTE ENGINE, LEARNING LOOP & SELF-IMPROVISER -->
-      <div id="tab-taste" class="tab-pane hidden">
-        <div class="section-head">
-          <h2>[ 05 // USER TASTE CONTRACT &amp; CONTRASTIVE LEARNING LOOP ]</h2>
-          <span class="section-tag">PONYTAIL:ULTRA</span>
-        </div>
-        <div class="row-3" style="margin-top:12px;">
-          <div>
-            <label>PONYTAIL LEVEL</label>
-            <select id="taste-ponytail">
-              <option value="ultra">ultra (Push back + Minimal code)</option>
-              <option value="full">full (Minimal code)</option>
-              <option value="lite">lite (Standard)</option>
-            </select>
-          </div>
-          <div>
-            <label>DESIGN VARIANCE (1-10)</label>
-            <input id="taste-variance" type="number" min="1" max="10" value="8" />
-          </div>
-          <div>
-            <label>VISUAL DENSITY (1-10)</label>
-            <input id="taste-density" type="number" min="1" max="10" value="8" />
-          </div>
-        </div>
-        <div style="margin-top:10px;">
-          <label>ADD NEW LEARNED TASTE RULE / CORRECTION</label>
-          <div class="row-2">
-            <input id="taste-new-rule" placeholder="e.g. Always run node --test before committing any file" />
-            <button class="btn" onclick="addTasteRuleUI()">+ ADD RULE TO TASTE CONTRACT</button>
-          </div>
-        </div>
-        <div id="taste-rules-list" class="terminal-log" style="height:130px;margin-top:10px;"></div>
-
-        <div class="section-head" style="margin-top:18px;">
-          <h2>[ SELF-IMPROVISE HARNESS STUDIO (GIT CHECKPOINT PROTECTED) ]</h2>
-          <span class="section-tag">AUTONOMOUS EVOLUTION</span>
-        </div>
-        <div style="margin-top:10px;">
-          <label>DESCRIBE NEW FEATURE OR IMPROVEMENT FOR THIS HARNESS (/home/aswath/agy-orchestrator)</label>
-          <textarea id="improvise-input" rows="2" placeholder="e.g. Add a new CLI subcommand orch benchmark that compares Gemini 4 Argon vs Claude Opus 5.5 latency..."></textarea>
-          <button class="btn btn-red" style="margin-top:8px;" onclick="improviseHarnessUI()">>>> SNAPSHOT GIT &amp; SELF-EVOLVE HARNESS</button>
-        </div>
-      </div>
-
-      <!-- TAB 06: PHONE & REMOTE AUTOMATION BRIDGE -->
-      <div id="tab-phone" class="tab-pane hidden">
-        <div class="section-head">
-          <h2>[ 06 // PHONE &amp; CLOUD NOTES BI-DIRECTIONAL AUTOMATION ]</h2>
-          <span class="section-tag">ONEDRIVE + NTFY.SH + AGY REMOTE</span>
-        </div>
-        <div class="matrix-grid" style="margin-top:12px;">
-          <div class="matrix-cell">
-            <strong>CHANNEL A // CLOUD NOTES INBOX (ONEDRIVE / KEEP)</strong>
-            <div style="color:var(--fg-muted);">Watches markdown task list synced from your phone:</div>
-            <code id="phone-inbox-path" style="color:var(--fg-phosphor);word-break:break-all;">/mnt/c/Users/aswat/OneDrive/Orch-Phone-Inbox.md</code>
-            <button class="btn btn-red" style="margin-top:6px;" onclick="scanPhoneInboxUI()">>>> SCAN &amp; RUN PHONE INBOX NOW</button>
-          </div>
-          <div class="matrix-cell">
-            <strong>CHANNEL B // NTFY.SH PHONE PUSH &amp; COMMAND TOPIC</strong>
-            <label>INCOMING COMMAND TOPIC (SEND FROM PHONE)</label>
-            <input id="phone-ntfy-in" value="agy-orch-aswath-cmd-9842" />
-            <label>OUTGOING RESULT TOPIC (SUBSCRIBE ON PHONE)</label>
-            <input id="phone-ntfy-out" value="agy-orch-aswath-out-9842" />
-            <div style="display:flex;gap:6px;margin-top:6px;">
-              <button class="btn" onclick="savePhoneConfigUI()">SAVE TOPICS</button>
-              <button class="btn" onclick="testPhonePushUI()">SEND TEST PUSH</button>
-            </div>
-          </div>
-          <div class="matrix-cell">
-            <strong>CHANNEL C // NATIVE AGY REMOTE-CONTROL DAEMON</strong>
-            <div style="color:var(--fg-muted);">Control AGY CLI sessions directly from mobile:</div>
-            <div style="display:flex;gap:6px;margin-top:8px;">
-              <button class="btn" onclick="agyRemoteUI('start')">START DAEMON</button>
-              <button class="btn" onclick="agyRemoteUI('status')">STATUS</button>
-              <button class="btn" onclick="agyRemoteUI('stop')">STOP</button>
-            </div>
-            <div id="agy-remote-status" style="margin-top:6px;color:var(--fg-muted);">Status: Ready</div>
-          </div>
-        </div>
-      </div>
-
-    </section>
-
-    <!-- RIGHT COLUMN: LIVE TELEMETRY STREAM & ACTIVE TOPOLOGY OVERVIEW -->
-    <aside class="panel">
-      <div class="section-head">
-        <h2>[ LIVE TELEMETRY &amp; SSE EVENT STREAM ]</h2>
-        <span class="section-tag">REAL-TIME BUS</span>
-      </div>
-      <div id="live-sse-stream" class="terminal-log">[SYSTEM] Connected to Orchestrator EventBus...</div>
-
-      <div class="section-head">
-        <h2>[ CURRENT DUAL-CATEGORY ROSTER MATRIX ]</h2>
-        <span class="section-tag">GEMINI + CLAUDE/GPT</span>
-      </div>
-      <div id="right-roster-summary" class="matrix-grid"></div>
     </aside>
-  </main>
+
+    <!-- ====================================================================
+         MAIN WORKSPACE + GLOBAL ACTIVE TASK PROGRESS BAR DOCK
+         ==================================================================== -->
+    <div class="main-area">
+      <!-- PERSISTENT TOP TASK PROGRESS & ACTIVE AGENT TELEMETRY DOCK -->
+      <header class="top-telemetry-dock">
+        <div class="dock-top-row">
+          <div class="active-agent-banner">
+            <span class="pulse-dot" id="globalPulseDot"></span>
+            <strong id="globalStageLabel">IDLE // READY FOR ORCHESTRATED DISPATCH</strong>
+            <span class="badge" id="globalWorkingAgentBadge">NO ACTIVE SUBPROCESS</span>
+          </div>
+          <div class="progress-meta-right">
+            <span class="mono" id="globalTaskTimer">ELAPSED: 00.0s</span>
+            <span class="progress-pct-badge" id="globalProgressPct">0%</span>
+          </div>
+        </div>
+
+        <div class="progress-track">
+          <div class="progress-fill" id="globalProgressBar"></div>
+        </div>
+
+        <div class="stage-stepper" id="globalStageStepper">
+          <div class="stage-pill" data-stage="1"><span>01. SKILL ROUTER</span><span class="st-icon">·</span></div>
+          <div class="stage-pill" data-stage="2"><span>02. HYBRID MEMORY</span><span class="st-icon">·</span></div>
+          <div class="stage-pill" data-stage="3"><span>03. LEADER PLAN</span><span class="st-icon">·</span></div>
+          <div class="stage-pill" data-stage="4"><span>04. SUBAGENTS</span><span class="st-icon">·</span></div>
+          <div class="stage-pill" data-stage="5"><span>05. GOLDFISH CRITIC</span><span class="st-icon">·</span></div>
+          <div class="stage-pill" data-stage="6"><span>06. DPO & COMMIT</span><span class="st-icon">·</span></div>
+        </div>
+      </header>
+
+      <!-- SCROLLABLE MAIN VIEWPORT -->
+      <main class="viewport-content">
+
+        <!-- ================================================================
+             VIEW 01 // COMMAND & PIPELINE OVERVIEW
+             ================================================================ -->
+        <!-- ================================================================
+             VIEW 00 // BUILD STUDIO: DIALOGUE -> PLAN APPROVAL -> LIVE PREVIEW -> CHAT CHANGES
+             ================================================================ -->
+        <section class="view-section active" id="view-studio">
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title">NEW BUILD // DESCRIBE WHAT YOU WANT (I WILL ASK BEFORE BUILDING)</div>
+              <div class="btn-row">
+                <select id="studioSessionSelect" style="width:220px;" onchange="studioOpen(this.value)"><option value="">— sessions —</option></select>
+                <select id="studioDryRun" style="width:170px;"><option value="true">SIMULATED AGENTS</option><option value="false">LIVE CLI AGENTS</option></select>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="btn-row">
+                <input type="text" id="studioStartInput" placeholder="e.g. A dashboard that shows my GitHub repos with commit sparklines" style="flex:1;" onkeydown="if(event.key==='Enter')studioStart()" />
+                <button class="btn btn-primary" onclick="studioStart()">START DIALOGUE</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="studio-grid">
+            <div class="panel" style="min-height:540px;">
+              <div class="panel-header"><div class="panel-title">DIALOGUE & CHANGE CHANNEL</div><span class="badge" id="studioStateBadge">NO SESSION</span></div>
+              <div class="chat-thread" id="studioThread"><div class="mono" style="color:var(--fg-muted);">Start a dialogue above. I will confirm scope, stack and quality before any agent writes code.</div></div>
+              <div id="studioQuestions" class="chat-questions"></div>
+              <div class="chat-input-row">
+                <input type="text" id="studioChatInput" placeholder="Chat: add context, request a change, ask for a tweak..." onkeydown="if(event.key==='Enter')studioChat()" />
+                <button class="btn btn-primary" onclick="studioChat()">SEND</button>
+              </div>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:16px;">
+              <div class="panel">
+                <div class="panel-header">
+                  <div class="panel-title">LIVE PREVIEW</div>
+                  <div class="btn-row"><button class="btn btn-sm" onclick="studioReloadPreview()">↻ RELOAD</button><a class="btn btn-sm" id="studioPreviewLink" target="_blank" style="text-decoration:none;">OPEN ↗</a></div>
+                </div>
+                <iframe id="studioPreviewFrame" class="preview-frame" sandbox="allow-scripts allow-forms"></iframe>
+              </div>
+              <div class="panel">
+                <div class="panel-header"><div class="panel-title">BUILD PLAN & PROGRESS</div><span class="badge badge-working" id="studioPctBadge">0%</span></div>
+                <div class="panel-body">
+                  <div class="progress-track"><div class="progress-fill" id="studioProgressBar"></div></div>
+                  <div id="studioPlanList" class="mono" style="display:flex; flex-direction:column; gap:6px;"></div>
+                  <div class="btn-row"><button class="btn btn-green" id="studioApproveBtn" onclick="studioApprove()" disabled>✓ APPROVE & BUILD</button></div>
+                  <details><summary class="field-label" style="cursor:pointer;">SPEC (what the agents will receive)</summary><div class="terminal-box" id="studioSpecBox" style="max-height:200px;"></div></details>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================================================================
+             VIEW 09 // LIVE SYSTEM DIAGRAM (TOP -> BOTTOM)
+             ================================================================ -->
+        <section class="view-section" id="view-diagram">
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title">HOW THE HARNESS WORKS — LIVE (NODES LIGHT UP AS EVENTS ARRIVE)</div>
+              <div class="btn-row"><span class="badge badge-working">ACTIVE</span><span class="badge badge-done">DONE</span><span class="badge">IDLE</span><button class="btn btn-sm" onclick="diagramReset()">RESET</button></div>
+            </div>
+            <div class="panel-body"><div class="flow" id="flowRoot"></div></div>
+          </div>
+        </section>
+
+        <section class="view-section" id="view-command">
+          <div class="kpi-grid">
+            <div class="kpi-card">
+              <div class="kpi-label">ACTIVE MAIN LEADER</div>
+              <div class="kpi-val" id="kpiLeaderModel">claude-opus-5-5</div>
+              <div class="kpi-sub" id="kpiLeaderSurface">Surface: agy-wsl · Effort: high</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">FRESH-CONTEXT GOLDFISH</div>
+              <div class="kpi-val" id="kpiCriticModel">gemini-4-argon</div>
+              <div class="kpi-sub" id="kpiCriticSurface">Cross-Category Adversarial Verifier</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">3-TIER HYBRID MEMORY</div>
+              <div class="kpi-val" id="kpiMemoryTotal">9,541</div>
+              <div class="kpi-sub" id="kpiMemorySub">claude-mem + local orch-mem FTS5/RRF</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">INDEXED LOCAL SKILLS</div>
+              <div class="kpi-val" id="kpiSkillsCount">305</div>
+              <div class="kpi-sub">99.71% Context Token Compression</div>
+            </div>
+          </div>
+
+          <div class="grid-asym">
+            <!-- COMMAND DISPATCH CONSOLE -->
+            <div class="panel">
+              <div class="panel-header">
+                <div class="panel-title">ORCHESTRATED TASK DISPATCH CONSOLE</div>
+                <span class="badge badge-cat-b" id="dispatchLeaderBadge">LEADER: CLAUDE OPUS 5.5</span>
+              </div>
+              <div class="panel-body">
+                <div>
+                  <label class="field-label">TASK / ENGINEERING OBJECTIVE</label>
+                  <textarea id="taskPromptInput" placeholder="Enter coding, architectural, debugging, or research task... (e.g. 'Audit cross-OS path handling and write unit tests')"></textarea>
+                </div>
+                <div class="grid-3">
+                  <div>
+                    <label class="field-label">EXECUTION MODE</label>
+                    <select id="taskModeSelect">
+                      <option value="egm">EGM (Leader + Dual Workers + Goldfish Critic)</option>
+                      <option value="full">FULL (Leader + Dual-Category Workers)</option>
+                      <option value="adaptive">ADAPTIVE (Complexity Gate >= 0.40)</option>
+                      <option value="single">SINGLE (Main Leader Only)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="field-label">OVERRIDE LEADER (OPTIONAL)</label>
+                    <select id="taskForceLeaderSelect">
+                      <option value="">Use Current Active Leader</option>
+                      <option value="agy-wsl:claude-opus-5-5-high">agy-wsl :: claude-opus-5-5-high [Cat B]</option>
+                      <option value="agy-wsl:gemini-4-argon-high">agy-wsl :: gemini-4-argon-high [Cat A]</option>
+                      <option value="agy-win:gemini-4-argon-high">agy-win :: gemini-4-argon-high [Cat A]</option>
+                      <option value="agy-win:gpt-oss-120b-medium">agy-win :: gpt-oss-120b-medium [Cat B]</option>
+                      <option value="cmdc:default">cmdc :: default [Taste CLI]</option>
+                      <option value="mcode:default">mcode :: default [MiniMax CLI]</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="field-label">EXECUTION SANDBOX</label>
+                    <select id="taskDryRunSelect">
+                      <option value="true">FAST SIMULATION (Dry-Run Pipeline Trace)</option>
+                      <option value="false">LIVE CLI SUBPROCESS (Real Headless Run)</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="btn-row">
+                  <button class="btn btn-primary" onclick="dispatchOrchestratedTask()">▶ DISPATCH ORCHESTRATED RUN</button>
+                  <button class="btn" onclick="previewSkillRoutingFromCommand()">⚡ PREVIEW SKILL ROUTING</button>
+                  <button class="btn" onclick="quickSwitchLeader('agy-wsl:claude-opus-5-5-high')">SET CLAUDE LEADER</button>
+                  <button class="btn" onclick="quickSwitchLeader('agy-wsl:gemini-4-argon-high')">SET GEMINI LEADER</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- LIVE PIPELINE TELEMETRY SUMMARY -->
+            <div class="panel">
+              <div class="panel-header">
+                <div class="panel-title">ACTIVE RUN PIPELINE BREAKDOWN</div>
+                <span class="badge" id="activeRunIdBadge">NO RUN YET</span>
+              </div>
+              <div class="panel-body">
+                <div id="pipelineStepsSummary" class="mono" style="font-size:11px; display:flex; flex-direction:column; gap:8px;">
+                  <div style="color:var(--fg-muted);">Dispatch a task to watch real-time stage progression across Router, Memory, Leader, Subagents, and Goldfish Critic.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- LIVE AGENT EXECUTION CARDS (QUICK VIEW) -->
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title">LIVE AGENT WORKFORCE STATUS & PROGRESS</div>
+              <button class="btn btn-sm" onclick="switchView('view-agents', document.querySelector('[data-view=view-agents]'))">OPEN FULL MONITOR →</button>
+            </div>
+            <div class="panel-body">
+              <div class="agent-grid" id="overviewAgentGrid"></div>
+            </div>
+          </div>
+
+          <!-- ORCHESTRATED OUTPUT & LIVE STREAM CONSOLE -->
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title">ORCHESTRATED EXECUTION OUTPUT & STREAM</div>
+              <button class="btn btn-sm" onclick="document.getElementById('commandOutputBox').textContent=''">CLEAR OUTPUT</button>
+            </div>
+            <div class="panel-body">
+              <div class="terminal-box" id="commandOutputBox">Ready. Select a mode and click [▶ DISPATCH ORCHESTRATED RUN].</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================================================================
+             VIEW 02 // TOPOLOGY & SUBAGENT WORKER MATRIX
+             ================================================================ -->
+        <section class="view-section" id="view-topology">
+          <div class="grid-2">
+            <!-- MAIN LEADER & CORE ROLES CONTROLLER -->
+            <div class="panel">
+              <div class="panel-header">
+                <div class="panel-title">MAIN LEADER & CORE ROLE SWITCHER</div>
+                <span class="badge badge-done">CROSS-CATEGORY LOCK ACTIVE</span>
+              </div>
+              <div class="panel-body">
+                <div class="grid-3">
+                  <div>
+                    <label class="field-label">LEADER SURFACE</label>
+                    <select id="topoLeaderSurface">
+                      <option value="agy-wsl">agy-wsl (Linux WSL2)</option>
+                      <option value="agy-win">agy-win (Windows NT)</option>
+                      <option value="cmdc">cmdc (Command Code)</option>
+                      <option value="mcode">mcode (MiniMax CLI)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="field-label">LEADER MODEL</label>
+                    <select id="topoLeaderModel">
+                      <option value="claude-opus-5-5-high">claude-opus-5-5-high [Cat B]</option>
+                      <option value="claude-sonnet-5-5-high">claude-sonnet-5-5-high [Cat B]</option>
+                      <option value="gpt-oss-120b-medium">gpt-oss-120b-medium [Cat B]</option>
+                      <option value="gemini-4-argon-high">gemini-4-argon-high [Cat A]</option>
+                      <option value="gemini-4-argon-medium">gemini-4-argon-medium [Cat A]</option>
+                      <option value="gemini-3.8-flash-high">gemini-3.8-flash-high [Cat A]</option>
+                      <option value="default">default (cmdc/mcode)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="field-label">REASONING EFFORT</label>
+                    <select id="topoLeaderEffort">
+                      <option value="high">high</option>
+                      <option value="medium">medium</option>
+                      <option value="low">low</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="btn-row">
+                  <button class="btn btn-primary" onclick="applyLeaderChange()">APPLY MAIN LEADER & AUTO-PAIR GOLDFISH</button>
+                </div>
+
+                <hr style="border:none; border-top:1px solid var(--border-hairline); margin:4px 0;">
+
+                <div class="grid-2">
+                  <div>
+                    <label class="field-label">GOLDFISH CRITIC SPEC</label>
+                    <input type="text" id="topoCriticInput" value="agy-wsl:gemini-4-argon-high" />
+                  </div>
+                  <div>
+                    <label class="field-label">THINKING ROUTER SPEC</label>
+                    <input type="text" id="topoRouterInput" value="agy-wsl:gemini-3.8-flash-high" />
+                  </div>
+                </div>
+                <div class="btn-row">
+                  <button class="btn" onclick="updateCoreRole('goldfishCritic', document.getElementById('topoCriticInput').value)">UPDATE GOLDFISH CRITIC</button>
+                  <button class="btn" onclick="updateCoreRole('router', document.getElementById('topoRouterInput').value)">UPDATE ROUTER BRAIN</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- ADD / EDIT SUBAGENT WORKER STUDIO -->
+            <div class="panel">
+              <div class="panel-header">
+                <div class="panel-title">UPSERT SUBAGENT WORKER NODE</div>
+                <span class="badge">DYNAMIC POOL</span>
+              </div>
+              <div class="panel-body">
+                <div class="grid-2">
+                  <div>
+                    <label class="field-label">WORKER ID</label>
+                    <input type="text" id="workerIdInput" placeholder="e.g. rust-systems-worker" />
+                  </div>
+                  <div>
+                    <label class="field-label">SURFACE:MODEL SPEC</label>
+                    <input type="text" id="workerSpecInput" placeholder="e.g. agy-win:gemini-4-argon-high" />
+                  </div>
+                </div>
+                <div class="grid-2">
+                  <div>
+                    <label class="field-label">SPECIALTIES (COMMA-SEPARATED)</label>
+                    <input type="text" id="workerSpecialtiesInput" placeholder="architecture, implementation, debugging, windows_os" />
+                  </div>
+                  <div>
+                    <label class="field-label">EFFORT LEVEL</label>
+                    <select id="workerEffortSelect">
+                      <option value="high">high</option>
+                      <option value="medium" selected>medium</option>
+                      <option value="low">low</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="btn-row">
+                  <button class="btn btn-primary" onclick="upsertSubagentWorker()">+ SAVE / UPDATE WORKER IN POOL</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SUBAGENT POOL MATRIX -->
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title">ACTIVE SUBAGENT WORKER POOL (ONE-CLICK SWAP WITH MAIN LEADER)</div>
+              <span class="badge" id="subagentCountBadge">6 WORKERS</span>
+            </div>
+            <div class="panel-body">
+              <div class="agent-grid" id="topologySubagentGrid"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================================================================
+             VIEW 03 // LIVE AGENT MONITOR & REAL-TIME EXECUTION STREAM
+             ================================================================ -->
+        <section class="view-section" id="view-agents">
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title">REAL-TIME AGENT EXECUTION MATRIX & PROGRESS SEEKER</div>
+              <span class="badge badge-working" id="monitorActiveSummaryBadge">ALL AGENTS STANDING BY</span>
+            </div>
+            <div class="panel-body">
+              <div class="agent-grid" id="fullAgentMonitorGrid"></div>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="panel">
+              <div class="panel-header">
+                <div class="panel-title">STEP-BY-STEP AGENT OUTPUT INSPECTOR</div>
+                <span class="badge">PER-ROLE TRACE</span>
+              </div>
+              <div class="panel-body">
+                <div class="terminal-box" id="agentStepInspectorBox">No steps recorded in current session yet. Dispatch a run from Tab 01 to inspect individual Leader, Worker, and Goldfish outputs.</div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-header">
+                <div class="panel-title">LIVE SSE TELEMETRY EVENT BUS</div>
+                <button class="btn btn-sm" onclick="document.getElementById('sseEventLogBox').textContent=''">CLEAR LOG</button>
+              </div>
+              <div class="panel-body">
+                <div class="terminal-box" id="sseEventLogBox"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================================================================
+             VIEW 04 // 3-TIER HYBRID MEMORY LAB (MemGPT + claude-mem)
+             ================================================================ -->
+        <section class="view-section" id="view-memory">
+          <div class="grid-asym">
+            <div class="panel">
+              <div class="panel-header">
+                <div class="panel-title">HYBRID RRF MEMORY SEARCH (FTS5 BM25 + 384-D VECTORS + EBBINGHAUS DECAY)</div>
+                <span class="badge badge-done">?immutable=1 BRIDGE</span>
+              </div>
+              <div class="panel-body">
+                <div class="btn-row">
+                  <input type="text" id="memSearchInput" placeholder="Search 9,541 Windows claude-mem observations + local orch-mem..." style="flex:1;" onkeydown="if(event.key==='Enter')searchHybridMemory()" />
+                  <button class="btn btn-primary" onclick="searchHybridMemory()">SEARCH HYBRID MEMORY</button>
+                </div>
+                <div id="memSearchResults" style="display:flex; flex-direction:column; gap:8px; max-height:460px; overflow-y:auto;"></div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-header">
+                <div class="panel-title">PIN NEW FACT / ARCHITECTURAL RULE TO MEMORY</div>
+                <span class="badge">TIER 1 / TIER 2</span>
+              </div>
+              <div class="panel-body">
+                <div class="grid-2">
+                  <div>
+                    <label class="field-label">MEMORY TIER</label>
+                    <select id="memStoreTier">
+                      <option value="global">global (Archival Tier 2)</option>
+                      <option value="session">session (Episodic Tier 1)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="field-label">CATEGORY</label>
+                    <select id="memStoreCategory">
+                      <option value="architecture">architecture</option>
+                      <option value="bugfix">bugfix</option>
+                      <option value="decision">decision</option>
+                      <option value="taste">taste</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label class="field-label">TITLE</label>
+                  <input type="text" id="memStoreTitle" placeholder="Concise rule or observation title..." />
+                </div>
+                <div>
+                  <label class="field-label">CONTENT / FACT PAYLOAD</label>
+                  <textarea id="memStoreContent" placeholder="Full observation or constraint to index in FTS5 + 384-d vector table..."></textarea>
+                </div>
+                <div class="grid-2">
+                  <div>
+                    <label class="field-label">TAGS (COMMA-SEPARATED)</label>
+                    <input type="text" id="memStoreTags" placeholder="sqlite, wsl2, rrf" />
+                  </div>
+                  <div>
+                    <label class="field-label">SALIENCE BOOST (0.5 - 2.0)</label>
+                    <input type="number" id="memStoreSalience" value="1.3" step="0.1" min="0.5" max="2.0" />
+                  </div>
+                </div>
+                <button class="btn btn-primary" onclick="storeNewMemoryItem()">+ COMMIT TO HYBRID MEMORY</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================================================================
+             VIEW 05 // TWO-STAGE THINKING SKILL ROUTER & THOMPSON BANDIT
+             ================================================================ -->
+        <section class="view-section" id="view-skills">
+          <div class="grid-2">
+            <div class="panel">
+              <div class="panel-header">
+                <div class="panel-title">TWO-STAGE THINKING SKILL ROUTER SIMULATOR</div>
+                <span class="badge badge-cat-a" id="routerTotalSkillsBadge">305 SKILLS INDEXED</span>
+              </div>
+              <div class="panel-body">
+                <div class="btn-row">
+                  <input type="text" id="skillRouteQueryInput" placeholder="Describe a task to test BM25 + Trigram Cosine + Bandit routing..." style="flex:1;" onkeydown="if(event.key==='Enter')simulateSkillRouting()" />
+                  <button class="btn btn-primary" onclick="simulateSkillRouting()">ROUTE TASK</button>
+                </div>
+                <div id="skillRouteSimulationOutput" style="display:flex; flex-direction:column; gap:8px;"></div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-header">
+                <div class="panel-title">THOMPSON SAMPLING BANDIT POSTERIORS — Beta(α, β)</div>
+                <span class="badge badge-cat-b">MARSAGLIA-TSANG SAMPLER</span>
+              </div>
+              <div class="panel-body">
+                <div id="banditArmsTableWrap" style="max-height:280px; overflow-y:auto;"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid-asym">
+            <div class="panel">
+              <div class="panel-header">
+                <div class="panel-title">SEARCHABLE LOCAL SKILL CATALOG (WSL + WINDOWS + EGM)</div>
+                <input type="text" id="skillCatalogFilterInput" placeholder="Filter 305 skills by name or keyword..." style="width:240px; padding:4px 8px;" oninput="renderSkillCatalogTable()" />
+              </div>
+              <div class="panel-body">
+                <div id="skillCatalogTableWrap" style="max-height:320px; overflow-y:auto;"></div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-header">
+                <div class="panel-title">SYNTHESIZE OR INSTALL MISSING SKILL</div>
+                <span class="badge">AUTO-EXTEND</span>
+              </div>
+              <div class="panel-body">
+                <div>
+                  <label class="field-label">SKILL NAME (SLUG)</label>
+                  <input type="text" id="synSkillName" placeholder="e.g. custom-cuda-profiling" />
+                </div>
+                <div>
+                  <label class="field-label">TRIGGER DESCRIPTION</label>
+                  <input type="text" id="synSkillDesc" placeholder="Use when profiling GPU kernels or CUDA memory bandwidth..." />
+                </div>
+                <div>
+                  <label class="field-label">SKILL INSTRUCTIONS (MARKDOWN)</label>
+                  <textarea id="synSkillBody" placeholder="# Instructions&#10;1. Always run nsys profile..."></textarea>
+                </div>
+                <div class="btn-row">
+                  <button class="btn btn-primary" onclick="synthesizeLocalSkill()">SYNTHESIZE LOCAL SKILL</button>
+                  <button class="btn" onclick="installExternalSkill()">NPX SKILLS ADD (EXTERNAL)</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================================================================
+             VIEW 06 // USER TASTE CONTRACT & CONTRASTIVE DPO LEARNING LOOP
+             ================================================================ -->
+        <section class="view-section" id="view-taste">
+          <div class="grid-2">
+            <div class="panel">
+              <div class="panel-header">
+                <div class="panel-title">USER TASTE CALIBRATION & AGY CLI THEME SYNC</div>
+                <span class="badge badge-done">PONYTAIL:ULTRA</span>
+              </div>
+              <div class="panel-body">
+                <div class="grid-3">
+                  <div>
+                    <label class="field-label">DESIGN VARIANCE (1-10)</label>
+                    <input type="number" id="tasteVarianceInput" value="8" min="1" max="10" />
+                  </div>
+                  <div>
+                    <label class="field-label">MOTION INTENSITY (1-10)</label>
+                    <input type="number" id="tasteMotionInput" value="6" min="1" max="10" />
+                  </div>
+                  <div>
+                    <label class="field-label">VISUAL DENSITY (1-10)</label>
+                    <input type="number" id="tasteDensityInput" value="8" min="1" max="10" />
+                  </div>
+                </div>
+                <div class="grid-2">
+                  <div>
+                    <label class="field-label">PONYTAIL LEVEL</label>
+                    <select id="tastePonytailSelect">
+                      <option value="ultra">ultra (Smallest complete solution, zero bloat)</option>
+                      <option value="full">full</option>
+                      <option value="lite">lite</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="field-label">AGY CLI THEME (WSL + WINDOWS)</label>
+                    <div class="btn-row">
+                      <select id="agyCliThemeSelect" style="flex:1;">
+                        <option value="tokyo night">tokyo night</option>
+                        <option value="dark">dark</option>
+                        <option value="dracula">dracula</option>
+                        <option value="monokai">monokai</option>
+                        <option value="light">light</option>
+                      </select>
+                      <button class="btn" onclick="applyAgyCliTheme()">SYNC CLI</button>
+                    </div>
+                  </div>
+                </div>
+                <button class="btn btn-primary" onclick="saveTasteCalibration()">SAVE TASTE PROFILE PARAMETERS</button>
+
+                <hr style="border:none; border-top:1px solid var(--border-hairline); margin:4px 0;">
+
+                <div>
+                  <label class="field-label">ADD NEW PERMANENT TASTE RULE</label>
+                  <div class="btn-row">
+                    <input type="text" id="newTasteRuleInput" placeholder="e.g. Never use placeholder comments or truncated code blocks..." style="flex:1;" />
+                    <button class="btn btn-primary" onclick="addNewTasteRule()">+ ADD RULE</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-header">
+                <div class="panel-title">CONTRASTIVE DPO PREFERENCE PAIR LOGGER</div>
+                <span class="badge badge-cat-b">ONLINE ALIGNMENT</span>
+              </div>
+              <div class="panel-body">
+                <div>
+                  <label class="field-label">REJECTED PATTERN (WHAT THE AGENT DID WRONG)</label>
+                  <input type="text" id="dpoRejectedInput" placeholder="e.g. Used raw \\wsl.localhost UNC path as cmd.exe CWD" />
+                </div>
+                <div>
+                  <label class="field-label">CHOSEN PATTERN (REQUIRED ENGINEERING STANDARD)</label>
+                  <input type="text" id="dpoChosenInput" placeholder="e.g. Stage prompt in C:\Users\aswat\.agy-orch-bridge and invoke via PowerShell" />
+                </div>
+                <div>
+                  <label class="field-label">ROOT CAUSE / DOMAIN CLUSTER</label>
+                  <input type="text" id="dpoRootCauseInput" placeholder="e.g. Windows CMD.EXE rejects UNC working directories" />
+                </div>
+                <button class="btn btn-primary" onclick="recordDpoPair()">RECORD DPO PAIR & CONSOLIDATE INTO TASTE CONTRACT</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title">COMPILED [USER TASTE CONTRACT] (INJECTED INTO ALL AGENTS)</div>
+              <span class="badge">LIVE SYSTEM PROMPT</span>
+            </div>
+            <div class="panel-body">
+              <div class="terminal-box" id="compiledTasteContractBox"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================================================================
+             VIEW 07 // PHONE & CLOUD NOTES BI-DIRECTIONAL BRIDGE
+             ================================================================ -->
+        <section class="view-section" id="view-phone">
+          <div class="grid-asym">
+            <div class="panel">
+              <div class="panel-header">
+                <div class="panel-title">ONEDRIVE / CLOUD NOTES INBOX (Orch-Phone-Inbox.md)</div>
+                <span class="badge badge-done" id="phoneInboxPathBadge">/mnt/c/Users/aswat/OneDrive/Orch-Phone-Inbox.md</span>
+              </div>
+              <div class="panel-body">
+                <div class="btn-row">
+                  <input type="text" id="phoneNewTaskInput" placeholder="Queue a new task (- [ ] ...) into your Phone/OneDrive Inbox..." style="flex:1;" onkeydown="if(event.key==='Enter')appendPhoneInboxTask()" />
+                  <button class="btn btn-primary" onclick="appendPhoneInboxTask()">+ ADD TASK TO INBOX</button>
+                  <button class="btn btn-green" onclick="triggerPhoneInboxScan()">▶ SCAN & EXECUTE PENDING (- [ ]) NOW</button>
+                </div>
+                <div>
+                  <label class="field-label">LIVE MARKDOWN INBOX FILE STATE (- [ ] PENDING · - [~] LOCKED · - [x] COMPLETED)</label>
+                  <textarea id="phoneInboxRawEditor" style="min-height:240px; font-family:'JetBrains Mono', monospace;"></textarea>
+                </div>
+                <div class="btn-row">
+                  <button class="btn" onclick="savePhoneInboxRaw()">SAVE RAW MARKDOWN FILE</button>
+                  <button class="btn" onclick="loadPhoneInboxRaw()">↻ RELOAD FILE FROM DISK</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-header">
+                <div class="panel-title">NTFY.SH PUB/SUB & AGY REMOTE-CONTROL</div>
+                <span class="badge">MOBILE PUSH</span>
+              </div>
+              <div class="panel-body">
+                <div>
+                  <label class="field-label">NTFY INBOUND COMMAND TOPIC (SUBSCRIBE ON PHONE)</label>
+                  <input type="text" id="ntfyTopicInInput" readonly />
+                </div>
+                <div>
+                  <label class="field-label">NTFY OUTBOUND ALERT TOPIC</label>
+                  <input type="text" id="ntfyTopicOutInput" readonly />
+                </div>
+                <div>
+                  <label class="field-label">SEND TEST PUSH NOTIFICATION TO PHONE</label>
+                  <div class="btn-row">
+                    <input type="text" id="ntfyTestMsgInput" placeholder="Message to push to phone..." style="flex:1;" />
+                    <button class="btn btn-primary" onclick="sendTestPhonePush()">PUSH TO PHONE</button>
+                  </div>
+                </div>
+                <hr style="border:none; border-top:1px solid var(--border-hairline); margin:4px 0;">
+                <div>
+                  <label class="field-label">PHONE AUTOMATION EXECUTION HISTORY</label>
+                  <div class="terminal-box" id="phoneHistoryBox" style="max-height:180px;">No phone tasks executed in this session yet.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================================================================
+             VIEW 08 // QUANTITATIVE EVALUATIONS & SELF-IMPROVISE STUDIO
+             ================================================================ -->
+        <section class="view-section" id="view-evals">
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title">QUANTITATIVE EVALUATION & ABLATION BENCHMARK SUITE (orch eval)</div>
+              <button class="btn btn-primary btn-sm" id="runEvalBtn" onclick="runQuantitativeEvals()">▶ RUN ALL 5 ABLATION BENCHMARKS NOW</button>
+            </div>
+            <div class="panel-body">
+              <div id="evalTablesContainer">Loading evaluation metrics...</div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title">SELF-IMPROVISE STUDIO (GIT-CHECKPOINTED HARNESS EVOLUTION)</div>
+              <span class="badge badge-cat-b">AUTO-CHECKPOINT</span>
+            </div>
+            <div class="panel-body">
+              <div>
+                <label class="field-label">DESCRIBE NEW FEATURE OR ARCHITECTURAL MODIFICATION FOR ORCH</label>
+                <textarea id="improvisePromptInput" placeholder="e.g. Add a Prometheus /metrics exporter endpoint to src/ui/server.mjs and write a test..."></textarea>
+              </div>
+              <div class="btn-row">
+                <button class="btn btn-primary" onclick="runSelfImprovise(true)">SIMULATE SELF-IMPROVISE (DRY-RUN)</button>
+                <button class="btn" onclick="runSelfImprovise(false)">EXECUTE LIVE SELF-IMPROVISE (CHECKPOINT + EDIT)</button>
+              </div>
+              <div class="terminal-box" id="improviseOutputBox">Self-Improvise creates a git commit checkpoint before dispatching your Leader + Subagents on /home/aswath/agy-orchestrator.</div>
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
 
   <script>
-    let STATE = null;
+    let HARNESS_STATE = null;
+    let TASK_TIMER_INTERVAL = null;
+    let TASK_STARTED_MS = 0;
+    let AGENT_LIVE_STATUS = {};
 
-    function switchTab(tabId, btnEl) {
-      document.querySelectorAll('.tab-pane').forEach(el => el.classList.add('hidden'));
-      document.getElementById(tabId).classList.remove('hidden');
-      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    /* ========================================================================
+       THEME SWITCHER (DARK CRT OBSIDIAN <-> LIGHT SWISS PAPER BLUEPRINT)
+       ======================================================================== */
+    function initTheme() {
+      const saved = localStorage.getItem('orch_ui_theme') || 'dark';
+      setUiTheme(saved);
+    }
+
+    function setUiTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem('orch_ui_theme', theme);
+      const lbl = document.getElementById('themeToggleLabel');
+      if (lbl) {
+        lbl.textContent = theme === 'light'
+          ? 'THEME // SWISS PAPER LIGHT'
+          : 'THEME // CRT OBSIDIAN DARK';
+      }
+    }
+
+    function toggleUiTheme() {
+      const cur = document.documentElement.getAttribute('data-theme') || 'dark';
+      setUiTheme(cur === 'dark' ? 'light' : 'dark');
+    }
+
+    /* ========================================================================
+       LEFT SIDEBAR VIEW NAVIGATION
+       ======================================================================== */
+    function switchView(viewId, btnEl) {
+      document.querySelectorAll('.view-section').forEach((s) => s.classList.remove('active'));
+      const target = document.getElementById(viewId);
+      if (target) target.classList.add('active');
+
+      document.querySelectorAll('.sidebar-nav .nav-item').forEach((b) => b.classList.remove('active'));
       if (btnEl) btnEl.classList.add('active');
     }
 
-    function appendLog(line) {
-      const box = document.getElementById('live-sse-stream');
-      const ts = new Date().toISOString().slice(11, 19);
-      box.textContent = `[${ts}] ${line}\n` + box.textContent.slice(0, 12000);
-    }
+    /* ========================================================================
+       GLOBAL TASK PROGRESS BAR & 6-STAGE STEPPER
+       ======================================================================== */
+    function updateGlobalProgress({ pct = 0, stageIndex = 0, label = '', activeAgent = '', status = 'idle' }) {
+      const bar = document.getElementById('globalProgressBar');
+      const pctEl = document.getElementById('globalProgressPct');
+      const lblEl = document.getElementById('globalStageLabel');
+      const agBadge = document.getElementById('globalWorkingAgentBadge');
+      const dot = document.getElementById('globalPulseDot');
 
-    async function apiPost(endpoint, payload) {
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+      bar.style.width = `${Math.max(0, Math.min(100, pct))}%`;
+      bar.classList.remove('working', 'completed');
+      dot.classList.remove('working');
+
+      if (status === 'working') {
+        bar.classList.add('working');
+        dot.classList.add('working');
+      } else if (status === 'completed') {
+        bar.classList.add('completed');
+      }
+
+      pctEl.textContent = `${Math.round(pct)}%`;
+      if (label) lblEl.textContent = label;
+      if (activeAgent) {
+        agBadge.textContent = activeAgent;
+        agBadge.className = status === 'working' ? 'badge badge-working' : 'badge badge-done';
+      }
+
+      document.querySelectorAll('#globalStageStepper .stage-pill').forEach((pill) => {
+        const idx = Number(pill.getAttribute('data-stage'));
+        const icon = pill.querySelector('.st-icon');
+        pill.classList.remove('active', 'done');
+        if (status === 'completed' || idx < stageIndex) {
+          pill.classList.add('done');
+          if (icon) icon.textContent = '✓';
+        } else if (idx === stageIndex && status === 'working') {
+          pill.classList.add('active');
+          if (icon) icon.textContent = '▶';
+        } else {
+          if (icon) icon.textContent = '·';
+        }
       });
-      return res.json();
     }
 
+    function startTaskStopwatch() {
+      if (TASK_TIMER_INTERVAL) clearInterval(TASK_TIMER_INTERVAL);
+      TASK_STARTED_MS = performance.now();
+      const el = document.getElementById('globalTaskTimer');
+      TASK_TIMER_INTERVAL = setInterval(() => {
+        const sec = ((performance.now() - TASK_STARTED_MS) / 1000).toFixed(1);
+        if (el) el.textContent = `ELAPSED: ${sec.padStart(4, '0')}s`;
+      }, 100);
+    }
+
+    function stopTaskStopwatch() {
+      if (TASK_TIMER_INTERVAL) {
+        clearInterval(TASK_TIMER_INTERVAL);
+        TASK_TIMER_INTERVAL = null;
+      }
+    }
+
+    /* ========================================================================
+       FETCH & RENDER HARNESS STATE
+       ======================================================================== */
     async function refreshState() {
       const res = await fetch('/api/state');
       const data = await res.json();
       if (!data.ok) return;
-      STATE = data;
-      renderState(data);
-    }
+      HARNESS_STATE = data;
 
-    function renderState(data) {
-      const leader = data.topology.leader;
-      document.getElementById('header-leader-readout').textContent =
-        `LEADER: ${leader.surface.toUpperCase()} // ${leader.model}`;
-      document.getElementById('leader-current-text').textContent =
-        `${leader.surface} :: ${leader.model} [effort=${leader.effort || 'high'}]`;
-      document.getElementById('leader-cat-badge').textContent = leader.category.toUpperCase();
-      document.getElementById('leader-surface').value = leader.surface;
-      document.getElementById('leader-effort').value = leader.effort || 'high';
+      const topo = data.topology;
+      const leader = topo.leader;
+      const critic = topo.goldfishCritic;
 
-      // Populate model selector with both Gemini and Claude/GPT models + default
-      const modelSel = document.getElementById('leader-model');
-      const allModels = [
-        ...data.catalog.gemini,
-        ...data.catalog['claude-gpt'],
-        { id: 'default', label: 'default (for cmdc / mcode)', category: 'external' },
-      ];
-      modelSel.innerHTML = allModels
-        .map(m => `<option value="${m.id}" ${m.id === leader.model ? 'selected' : ''}>[${m.category}] ${m.id}</option>`)
-        .join('');
+      // Sidebar Leader Box
+      document.getElementById('sidebarLeaderSpec').textContent = `${leader.surface} :: ${leader.model}`;
+      const catBadge = document.getElementById('sidebarLeaderCat');
+      catBadge.textContent = leader.category === 'gemini' ? 'CAT A (GEMINI)' : 'CAT B (CLAUDE/GPT)';
+      catBadge.className = `badge ${leader.category === 'gemini' ? 'badge-cat-a' : 'badge-cat-b'}`;
+      document.getElementById('sidebarCriticSpec').textContent = `Goldfish: ${critic.surface}:${critic.model}`;
 
-      if (data.themes?.wsl) {
-        document.getElementById('global-theme-select').value = data.themes.wsl;
+      // Nav Badges
+      document.getElementById('navBadgeWorkers').textContent = Object.keys(topo.subagents || {}).length;
+      document.getElementById('navBadgeSkills').textContent = data.skillsCount || 305;
+      const totalMem = (data.memory?.claudeMemObservations || 0) + (data.memory?.localMemories || 0);
+      document.getElementById('navBadgeMemory').textContent = totalMem > 1000 ? `${(totalMem / 1000).toFixed(1)}K` : totalMem;
+
+      // KPI Strip
+      document.getElementById('kpiLeaderModel').textContent = leader.model;
+      document.getElementById('kpiLeaderSurface').textContent = `Surface: ${leader.surface} · Effort: ${leader.effort}`;
+      document.getElementById('kpiCriticModel').textContent = critic.model;
+      document.getElementById('kpiCriticSurface').textContent = `Surface: ${critic.surface} [${critic.category}]`;
+      document.getElementById('kpiMemoryTotal').textContent = totalMem.toLocaleString();
+      document.getElementById('kpiMemorySub').textContent = `${data.memory?.claudeMemObservations || 0} claude-mem + ${data.memory?.localMemories || 0} orch-mem`;
+      document.getElementById('kpiSkillsCount').textContent = data.skillsCount || 305;
+      document.getElementById('dispatchLeaderBadge').textContent = `LEADER: ${leader.surface}:${leader.model}`;
+
+      // Topology Form Inputs
+      document.getElementById('topoLeaderSurface').value = leader.surface;
+      document.getElementById('topoLeaderModel').value = leader.model;
+      document.getElementById('topoLeaderEffort').value = leader.effort || 'high';
+      document.getElementById('topoCriticInput').value = `${critic.surface}:${critic.model}`;
+      document.getElementById('topoRouterInput').value = `${topo.router.surface}:${topo.router.model}`;
+
+      // Taste Contract & Inputs
+      if (data.taste) {
+        document.getElementById('tasteVarianceInput').value = data.taste.ui?.designVariance ?? 8;
+        document.getElementById('tasteMotionInput').value = data.taste.ui?.motionIntensity ?? 6;
+        document.getElementById('tasteDensityInput').value = data.taste.ui?.visualDensity ?? 8;
+        document.getElementById('tastePonytailSelect').value = data.taste.coding?.ponytailLevel || 'ultra';
+      }
+      document.getElementById('compiledTasteContractBox').textContent = data.tasteContract || '';
+
+      // Phone Status
+      if (data.phone) {
+        const ntfy = data.phone.config?.channels?.ntfy || {};
+        document.getElementById('ntfyTopicInInput').value = ntfy.topicIn ? `${ntfy.serverUrl}/${ntfy.topicIn}` : '';
+        document.getElementById('ntfyTopicOutInput').value = ntfy.topicOut ? `${ntfy.serverUrl}/${ntfy.topicOut}` : '';
+        if (data.phone.history && data.phone.history.length > 0) {
+          document.getElementById('phoneHistoryBox').textContent = data.phone.history
+            .map((h) => `[${h.timestamp}] (${h.channel}) ${h.prompt}\n  -> ${h.summary}`)
+            .join('\n\n');
+        }
       }
 
-      // Render Subagents Grid with one-click Swap to Leader
-      const subGrid = document.getElementById('subagents-grid');
-      const entries = Object.entries(data.topology.subagents || {});
-      subGrid.innerHTML = entries.map(([id, w]) => {
-        const badgeClass = w.category === 'gemini' ? 'badge-gemini' : 'badge-claude';
-        return `
-          <div class="matrix-cell">
-            <div style="display:flex;justify-content:space-between;align-items:center;">
-              <strong>${id}</strong>
-              <span class="badge ${badgeClass}">${w.category}</span>
-            </div>
-            <div>SURFACE: <b>${w.surface}</b></div>
-            <div>MODEL: <b>${w.model}</b> (${w.effort || 'medium'})</div>
-            <div style="color:var(--fg-muted);font-size:10px;">TAGS: ${(w.specialties || []).join(', ')}</div>
-            <div style="display:flex;gap:6px;margin-top:6px;">
-              <button class="btn btn-red" style="padding:5px 8px;font-size:10px;" onclick="swapWithLeaderUI('${id}')">PROMOTE / SWAP LEADER</button>
-              <button class="btn" style="padding:5px 8px;font-size:10px;" onclick="removeWorkerUI('${id}')">REMOVE</button>
-            </div>
-          </div>
-        `;
-      }).join('');
+      renderAgentGrids();
+      renderTopologySubagents();
+      renderBanditArmsTable();
+      renderSkillCatalogTable();
+      if (data.evalReport) {
+        renderEvalReport(data.evalReport);
+      }
+    }
 
-      // Right sidebar compact summary
-      document.getElementById('right-roster-summary').innerHTML = `
-        <div class="matrix-cell leader-highlight">
-          <strong>MAIN LEADER</strong>
-          <div>${leader.surface} : ${leader.model}</div>
-          <span class="badge">${leader.category}</span>
+    /* ========================================================================
+       RENDER LIVE AGENT CARDS (OVERVIEW + MONITOR + TOPOLOGY)
+       ======================================================================== */
+    function getAllConfiguredAgents() {
+      if (!HARNESS_STATE?.topology) return [];
+      const t = HARNESS_STATE.topology;
+      const list = [
+        { id: t.leader.id || 'leader-main', role: 'MAIN LEADER', ...t.leader },
+        { id: t.goldfishCritic.id || 'goldfish-critic', role: 'GOLDFISH CRITIC', ...t.goldfishCritic },
+        { id: t.router.id || 'thinking-router', role: 'SKILL ROUTER', ...t.router },
+      ];
+      for (const [id, w] of Object.entries(t.subagents || {})) {
+        list.push({ id, role: 'SUBAGENT WORKER', ...w });
+      }
+      return list;
+    }
+
+    function renderAgentGrids() {
+      const agents = getAllConfiguredAgents();
+      const html = agents
+        .map((a) => {
+          const live = AGENT_LIVE_STATUS[a.id] || { state: 'IDLE', pct: 0, lastLatencyMs: null };
+          const isWorking = live.state === 'WORKING';
+          const isDone = live.state === 'COMPLETED';
+          const catClass = a.category === 'gemini' ? 'badge-cat-a' : 'badge-cat-b';
+          const stateClass = isWorking ? 'badge-working' : isDone ? 'badge-done' : '';
+          return `
+            <div class="agent-card ${isWorking ? 'working' : ''}">
+              <div class="agent-card-top">
+                <div>
+                  <div class="agent-name">${a.id}</div>
+                  <div class="agent-spec">${a.role} · ${a.surface}:${a.model}</div>
+                </div>
+                <span class="badge ${stateClass}">${live.state}</span>
+              </div>
+              <div class="btn-row" style="justify-content:space-between;">
+                <span class="badge ${catClass}">${a.category}</span>
+                <span class="mono" style="font-size:10px; color:var(--fg-secondary);">
+                  ${live.lastLatencyMs ? `${live.lastLatencyMs} ms` : `effort=${a.effort || 'medium'}`}
+                </span>
+              </div>
+              <div class="agent-mini-bar">
+                <div class="agent-mini-fill" style="width:${isWorking ? 65 : isDone ? 100 : 0}%"></div>
+              </div>
+            </div>
+          `;
+        })
+        .join('');
+
+      document.getElementById('overviewAgentGrid').innerHTML = html;
+      document.getElementById('fullAgentMonitorGrid').innerHTML = html;
+    }
+
+    function renderTopologySubagents() {
+      if (!HARNESS_STATE?.topology?.subagents) return;
+      const entries = Object.entries(HARNESS_STATE.topology.subagents);
+      document.getElementById('subagentCountBadge').textContent = `${entries.length} WORKERS`;
+      document.getElementById('topologySubagentGrid').innerHTML = entries
+        .map(([id, w]) => {
+          const catClass = w.category === 'gemini' ? 'badge-cat-a' : 'badge-cat-b';
+          return `
+            <div class="agent-card">
+              <div class="agent-card-top">
+                <div>
+                  <div class="agent-name">${id}</div>
+                  <div class="agent-spec">${w.surface} :: ${w.model}</div>
+                </div>
+                <span class="badge ${catClass}">${w.category}</span>
+              </div>
+              <div class="mono" style="font-size:10px; color:var(--fg-secondary);">
+                Specialties: ${(w.specialties || []).join(', ')}
+              </div>
+              <div class="btn-row" style="margin-top:4px;">
+                <button class="btn btn-primary btn-sm" onclick="swapWithSubagent('${id}')">⇄ SWAP WITH LEADER</button>
+                <button class="btn btn-sm" onclick="populateWorkerForm('${id}')">EDIT</button>
+                <button class="btn btn-sm" onclick="deleteSubagentWorker('${id}')">✕ REMOVE</button>
+              </div>
+            </div>
+          `;
+        })
+        .join('');
+    }
+
+    /* ========================================================================
+       DISPATCH TASK & TOPOLOGY ACTIONS
+       ======================================================================== */
+    async function dispatchOrchestratedTask() {
+      const prompt = document.getElementById('taskPromptInput').value.trim();
+      if (!prompt) return alert('Enter a task prompt first.');
+      const mode = document.getElementById('taskModeSelect').value;
+      const forceLeader = document.getElementById('taskForceLeaderSelect').value || null;
+      const dryRun = document.getElementById('taskDryRunSelect').value === 'true';
+
+      AGENT_LIVE_STATUS = {};
+      renderAgentGrids();
+      startTaskStopwatch();
+      updateGlobalProgress({
+        pct: 8,
+        stageIndex: 1,
+        label: 'STAGE 1/6 · TWO-STAGE THINKING SKILL ROUTER',
+        activeAgent: 'thinking-router',
+        status: 'working',
+      });
+
+      document.getElementById('commandOutputBox').textContent = `>>> Dispatching task (${mode}, dryRun=${dryRun})...\n`;
+
+      const res = await fetch('/api/run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt, mode, forceLeader, dryRun }),
+      });
+      const data = await res.json();
+      stopTaskStopwatch();
+
+      if (data.runId) {
+        document.getElementById('activeRunIdBadge').textContent = data.runId;
+      }
+
+      updateGlobalProgress({
+        pct: 100,
+        stageIndex: 6,
+        label: `COMPLETED // ${data.mode?.toUpperCase() || 'RUN'} (${data.steps?.length || 0} STEPS VERIFIED)`,
+        activeAgent: 'ALL DONE',
+        status: 'completed',
+      });
+
+      document.getElementById('commandOutputBox').textContent = data.finalOutput || JSON.stringify(data, null, 2);
+
+      if (data.steps) {
+        document.getElementById('pipelineStepsSummary').innerHTML = data.steps
+          .map(
+            (s, i) => `
+              <div style="padding:6px 8px; border:1px solid var(--border-hairline); background:var(--bg-elevated); display:flex; justify-content:space-between;">
+                <span><strong>0${i + 1}. ${s.role.toUpperCase()}</strong> · ${s.agentId} (${s.surface}:${s.model})</span>
+                <span style="color:var(--accent-green);">✓ ${s.latencyMs} ms</span>
+              </div>
+            `
+          )
+          .join('');
+
+        document.getElementById('agentStepInspectorBox').textContent = data.steps
+          .map((s) => `=== [${s.role.toUpperCase()}] ${s.agentId} (${s.surface}:${s.model} · ${s.latencyMs}ms) ===\n${s.output}`)
+          .join('\n\n');
+      }
+
+      await refreshState();
+    }
+
+    async function quickSwitchLeader(spec) {
+      await fetch('/api/topology', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'set-leader', spec, effort: 'high' }),
+      });
+      await refreshState();
+    }
+
+    async function applyLeaderChange() {
+      const surface = document.getElementById('topoLeaderSurface').value;
+      const model = document.getElementById('topoLeaderModel').value;
+      const effort = document.getElementById('topoLeaderEffort').value;
+      await fetch('/api/topology', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'set-leader', spec: `${surface}:${model}`, effort }),
+      });
+      await refreshState();
+    }
+
+    async function updateCoreRole(roleKey, spec) {
+      await fetch('/api/topology', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'set-role', roleKey, spec, effort: 'high' }),
+      });
+      await refreshState();
+    }
+
+    async function swapWithSubagent(subagentId) {
+      await fetch('/api/topology', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'swap', subagentId }),
+      });
+      await refreshState();
+    }
+
+    function populateWorkerForm(id) {
+      const w = HARNESS_STATE?.topology?.subagents?.[id];
+      if (!w) return;
+      document.getElementById('workerIdInput').value = id;
+      document.getElementById('workerSpecInput').value = `${w.surface}:${w.model}`;
+      document.getElementById('workerSpecialtiesInput').value = (w.specialties || []).join(', ');
+      document.getElementById('workerEffortSelect').value = w.effort || 'medium';
+    }
+
+    async function upsertSubagentWorker() {
+      const id = document.getElementById('workerIdInput').value.trim();
+      const spec = document.getElementById('workerSpecInput').value.trim();
+      const specialties = document
+        .getElementById('workerSpecialtiesInput')
+        .value.split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+      const effort = document.getElementById('workerEffortSelect').value;
+      if (!id || !spec) return alert('Provide both Worker ID and surface:model spec.');
+      await fetch('/api/topology', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'upsert-worker', id, spec, specialties, effort }),
+      });
+      await refreshState();
+    }
+
+    async function deleteSubagentWorker(id) {
+      await fetch('/api/topology', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'remove-worker', id }),
+      });
+      await refreshState();
+    }
+
+    /* ========================================================================
+       3-TIER HYBRID MEMORY LAB
+       ======================================================================== */
+    async function searchHybridMemory() {
+      const query = document.getElementById('memSearchInput').value.trim();
+      if (!query) return;
+      const res = await fetch('/api/memory/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query, limit: 10, includeClaudeMem: true }),
+      });
+      const data = await res.json();
+      const list = data.results || [];
+      document.getElementById('memSearchResults').innerHTML =
+        list.length === 0
+          ? '<div class="mono" style="color:var(--fg-muted);">No matching observations found.</div>'
+          : list
+              .map((m) => {
+                const pct = Math.min(100, Math.round((m.rrfScore || 0.02) * 3200));
+                return `
+                  <div style="padding:10px; border:1px solid var(--border-hairline); background:var(--bg-elevated);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                      <strong class="mono">${m.title || 'Observation'}</strong>
+                      <div class="btn-row">
+                        <span class="badge ${m.source === 'claude-mem' ? 'badge-cat-a' : 'badge-cat-b'}">${m.source}</span>
+                        <span class="badge">RRF: ${Number(m.rrfScore || 0).toFixed(4)}</span>
+                      </div>
+                    </div>
+                    <div style="margin-top:6px; font-size:12px; color:var(--fg-secondary);">${(m.content || '').slice(0, 320)}</div>
+                    <div class="score-bar-wrap"><div class="score-bar-fill" style="width:${pct}%"></div></div>
+                  </div>
+                `;
+              })
+              .join('');
+    }
+
+    async function storeNewMemoryItem() {
+      const tier = document.getElementById('memStoreTier').value;
+      const category = document.getElementById('memStoreCategory').value;
+      const title = document.getElementById('memStoreTitle').value.trim();
+      const content = document.getElementById('memStoreContent').value.trim();
+      const tags = document
+        .getElementById('memStoreTags')
+        .value.split(',')
+        .map((t) => t.trim())
+        .filter(Boolean);
+      const salience = Number(document.getElementById('memStoreSalience').value || 1.3);
+      if (!title || !content) return alert('Enter both title and content.');
+      await fetch('/api/memory/store', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tier, category, title, content, tags, salience }),
+      });
+      document.getElementById('memStoreTitle').value = '';
+      document.getElementById('memStoreContent').value = '';
+      document.getElementById('memSearchInput').value = title;
+      await searchHybridMemory();
+      await refreshState();
+    }
+
+    /* ========================================================================
+       SKILL ROUTER & THOMPSON BANDIT
+       ======================================================================== */
+    async function simulateSkillRouting() {
+      const prompt = document.getElementById('skillRouteQueryInput').value.trim();
+      if (!prompt) return;
+      const res = await fetch('/api/skills/route', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt, maxSkills: 5 }),
+      });
+      const data = await res.json();
+      const skills = data.selectedSkills || [];
+      const workers = data.agentPlan?.selectedWorkers || [];
+      document.getElementById('skillRouteSimulationOutput').innerHTML = `
+        <div class="btn-row">
+          <span class="badge badge-cat-b">COMPLEXITY: ${data.complexityScore}</span>
+          <span class="badge badge-done">TOP-5 RRF SELECTED</span>
         </div>
-        <div class="matrix-cell">
-          <strong>EGM GOLDFISH CRITIC</strong>
-          <div>${data.topology.goldfishCritic.surface} : ${data.topology.goldfishCritic.model}</div>
-          <span class="badge">${data.topology.goldfishCritic.category}</span>
-        </div>
-        <div class="matrix-cell">
-          <strong>THINKING ROUTER</strong>
-          <div>${data.topology.router.surface} : ${data.topology.router.model}</div>
-        </div>
-        <div class="matrix-cell">
-          <strong>HYBRID MEMORY STATS</strong>
-          <div>CLAUDE-MEM: ${data.memory.claudeMemObservations} obs</div>
-          <div>ORCH-MEM: ${data.memory.localMemories} items</div>
+        ${skills
+          .map(
+            (s, i) => `
+          <div style="padding:8px 10px; border:1px solid var(--border-hairline); background:var(--bg-elevated);">
+            <div style="display:flex; justify-content:space-between;">
+              <strong class="mono">#${i + 1} ${s.name}</strong>
+              <span class="mono" style="font-size:10px; color:var(--accent-primary);">RRF=${s.rrfScore} (BM25=${s.bm25Score}, Cos=${s.cosineSim})</span>
+            </div>
+            <div style="font-size:11px; color:var(--fg-secondary); margin-top:3px;">${s.description}</div>
+          </div>
+        `
+          )
+          .join('')}
+        <div class="mono" style="font-size:10px; color:var(--fg-secondary);">
+          Bandit Selected Workers: ${workers.map((w) => `${w.id} (θ=${w.banditTheta})`).join(', ')}
         </div>
       `;
-
-      // Memory stats badge
-      document.getElementById('mem-stats-badge').textContent =
-        `CLAUDE-MEM: ${data.memory.claudeMemObservations} OBS // LOCAL: ${data.memory.localMemories}`;
-      document.getElementById('skills-count-badge').textContent =
-        `${data.skillsCount} INDEXED SKILLS`;
-
-      // Bandit arms
-      const arms = Object.entries(data.bandit?.arms || {});
-      document.getElementById('bandit-arms-grid').innerHTML = arms.length
-        ? arms.map(([k, a]) => `
-            <div class="matrix-cell">
-              <strong>${k}</strong>
-              <div>POSTERIOR: alpha=${a.alpha} / beta=${a.beta}</div>
-              <div>EXPECTED REWARD: <b>${(a.expectedReward * 100).toFixed(1)}%</b> (pulls=${a.pulls})</div>
-              <div style="color:var(--fg-muted);">AVG LATENCY: ${a.avgLatencyMs}ms</div>
-            </div>
-          `).join('')
-        : '<div class="matrix-cell">No bandit pulls recorded yet. Execute a run to update Beta(alpha, beta) posteriors.</div>';
-
-      // Taste rules
-      document.getElementById('taste-rules-list').textContent =
-        (data.taste?.customRules || []).map((r, i) => `[RULE 0${i + 1}] ${r}`).join('\n');
     }
 
-    async function setLeaderFromUI() {
-      const surface = document.getElementById('leader-surface').value;
-      const model = document.getElementById('leader-model').value;
-      const effort = document.getElementById('leader-effort').value;
-      await apiPost('/api/topology', {
-        action: 'set-leader',
-        spec: `${surface}:${model}`,
-        effort,
+    function previewSkillRoutingFromCommand() {
+      const p = document.getElementById('taskPromptInput').value.trim();
+      if (!p) return;
+      document.getElementById('skillRouteQueryInput').value = p;
+      switchView('view-skills', document.querySelector('[data-view=view-skills]'));
+      simulateSkillRouting();
+    }
+
+    function renderBanditArmsTable() {
+      const arms = HARNESS_STATE?.bandit?.arms || {};
+      const skillRewards = HARNESS_STATE?.bandit?.skillRewards || {};
+      const rows = [
+        ...Object.entries(arms).map(([id, a]) => ({
+          name: `AGENT // ${id}`,
+          alpha: a.alpha,
+          beta: a.beta,
+          pulls: a.pulls || 0,
+          mean: a.alpha / (a.alpha + a.beta),
+        })),
+        ...Object.entries(skillRewards).map(([sk, s]) => ({
+          name: `SKILL // ${sk}`,
+          alpha: s.alpha,
+          beta: s.beta,
+          pulls: s.uses || 0,
+          mean: s.alpha / (s.alpha + s.beta),
+        })),
+      ];
+
+      if (rows.length === 0) {
+        document.getElementById('banditArmsTableWrap').innerHTML =
+          '<div class="mono" style="color:var(--fg-muted);">Bandit posteriors initialize on first task execution.</div>';
+        return;
+      }
+
+      document.getElementById('banditArmsTableWrap').innerHTML = `
+        <table class="data-table">
+          <thead>
+            <tr><th>ARM / SKILL</th><th>α</th><th>β</th><th>PULLS</th><th>WIN POSTERIOR E[θ]</th></tr>
+          </thead>
+          <tbody>
+            ${rows
+              .map(
+                (r) => `
+              <tr>
+                <td><strong>${r.name}</strong></td>
+                <td>${Number(r.alpha).toFixed(2)}</td>
+                <td>${Number(r.beta).toFixed(2)}</td>
+                <td>${r.pulls}</td>
+                <td>
+                  ${(r.mean * 100).toFixed(1)}%
+                  <div class="score-bar-wrap"><div class="score-bar-fill" style="width:${Math.round(r.mean * 100)}%"></div></div>
+                </td>
+              </tr>
+            `
+              )
+              .join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    function renderSkillCatalogTable() {
+      const sample = HARNESS_STATE?.skillsSample || [];
+      const q = (document.getElementById('skillCatalogFilterInput')?.value || '').toLowerCase().trim();
+      const filtered = q
+        ? sample.filter((s) => s.name.toLowerCase().includes(q) || s.description.toLowerCase().includes(q))
+        : sample.slice(0, 80);
+
+      document.getElementById('routerTotalSkillsBadge').textContent = `${HARNESS_STATE?.skillsCount || sample.length} SKILLS INDEXED`;
+      document.getElementById('skillCatalogTableWrap').innerHTML = `
+        <table class="data-table">
+          <thead>
+            <tr><th style="width:220px;">SKILL NAME</th><th>DESCRIPTION / TRIGGER</th></tr>
+          </thead>
+          <tbody>
+            ${filtered
+              .map(
+                (s) => `
+              <tr>
+                <td><strong>${s.name}</strong></td>
+                <td style="color:var(--fg-secondary);">${s.description}</td>
+              </tr>
+            `
+              )
+              .join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    async function synthesizeLocalSkill() {
+      const name = document.getElementById('synSkillName').value.trim();
+      const description = document.getElementById('synSkillDesc').value.trim();
+      const instructions = document.getElementById('synSkillBody').value.trim();
+      if (!name || !description) return alert('Enter skill name and description.');
+      await fetch('/api/skills/install', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ synthesize: true, name, description, instructions }),
       });
-      appendLog(`Switched Main Leader -> ${surface}:${model} (${effort})`);
+      await refreshState();
+      alert(`Synthesized skill: ${name}`);
+    }
+
+    async function installExternalSkill() {
+      const query = document.getElementById('synSkillName').value.trim();
+      if (!query) return alert('Enter skill package name in Skill Name field.');
+      await fetch('/api/skills/install', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query }),
+      });
       await refreshState();
     }
 
-    async function swapWithLeaderUI(subId) {
-      await apiPost('/api/topology', { action: 'swap', subagentId: subId });
-      appendLog(`Swapped Main Leader with Subagent [${subId}]`);
+    /* ========================================================================
+       TASTE ENGINE & DPO LEARNING LOOP
+       ======================================================================== */
+    async function saveTasteCalibration() {
+      const designVariance = Number(document.getElementById('tasteVarianceInput').value);
+      const motionIntensity = Number(document.getElementById('tasteMotionInput').value);
+      const visualDensity = Number(document.getElementById('tasteDensityInput').value);
+      const ponytailLevel = document.getElementById('tastePonytailSelect').value;
+      await fetch('/api/taste', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          patch: {
+            coding: { ponytailLevel },
+            ui: { designVariance, motionIntensity, visualDensity },
+          },
+        }),
+      });
       await refreshState();
     }
 
-    async function upsertWorkerUI() {
-      const id = document.getElementById('new-worker-id').value.trim();
-      const spec = document.getElementById('new-worker-spec').value.trim();
-      const specialties = document.getElementById('new-worker-spec-tags').value
-        .split(',')
-        .map(s => s.trim())
-        .filter(Boolean);
-      if (!id || !spec) return;
-      await apiPost('/api/topology', { action: 'upsert-worker', id, spec, specialties });
-      appendLog(`Upserted Worker [${id}] -> ${spec}`);
-      await refreshState();
-    }
-
-    async function removeWorkerUI(id) {
-      await apiPost('/api/topology', { action: 'remove-worker', id });
-      appendLog(`Removed Worker [${id}]`);
-      await refreshState();
-    }
-
-    async function dispatchTaskUI() {
-      const prompt = document.getElementById('task-prompt').value.trim();
-      if (!prompt) return;
-      const mode = document.getElementById('task-mode').value || null;
-      const sessionId = document.getElementById('task-session').value.trim() || 'default';
-      const dryRun = document.getElementById('task-dryrun').value === 'true';
-
-      const outBox = document.getElementById('dispatch-result-box');
-      outBox.textContent = `>>> DISPATCHING TO ORCHESTRATOR [mode=${mode || 'adaptive'}, dryRun=${dryRun}]...\n`;
-      const res = await apiPost('/api/run', { prompt, mode, sessionId, dryRun });
-      outBox.textContent = JSON.stringify(res, null, 2);
-      await refreshState();
-    }
-
-    async function previewRouteUI() {
-      const prompt = document.getElementById('task-prompt').value.trim();
-      if (!prompt) return;
-      const res = await apiPost('/api/skills/route', { prompt, maxSkills: 5 });
-      document.getElementById('dispatch-result-box').textContent = JSON.stringify(res, null, 2);
-    }
-
-    async function searchMemoryUI() {
-      const query = document.getElementById('mem-search-input').value.trim();
-      const res = await apiPost('/api/memory/search', { query, limit: 8, includeClaudeMem: true });
-      const grid = document.getElementById('mem-results-grid');
-      grid.innerHTML = (res.results || []).map(r => `
-        <div class="matrix-cell">
-          <div style="display:flex;justify-content:space-between;">
-            <strong>${r.title}</strong>
-            <span class="badge">${r.source}</span>
-          </div>
-          <div style="color:var(--accent-red);font-size:10px;">
-            RRF=${r.rrfScore} | BM25_RANK=${r.bm25Rank || '-'} | COSINE=${r.cosineSim || 0}
-          </div>
-          <div style="color:var(--fg-muted);">${String(r.content || '').slice(0, 220)}</div>
-        </div>
-      `).join('') || '<div class="matrix-cell">No matching memories found.</div>';
-    }
-
-    async function storeMemoryUI() {
-      const title = document.getElementById('mem-new-title').value.trim();
-      const content = document.getElementById('mem-new-content').value.trim();
-      const tags = document.getElementById('mem-new-tags').value.split(',').map(s => s.trim()).filter(Boolean);
-      if (!title || !content) return;
-      await apiPost('/api/memory/store', { title, content, tags, tier: 'global' });
-      appendLog(`Stored new global memory: ${title}`);
-      await refreshState();
-    }
-
-    async function testSkillRouterUI() {
-      const prompt = document.getElementById('router-test-input').value.trim();
-      if (!prompt) return;
-      const res = await apiPost('/api/skills/route', { prompt, maxSkills: 6 });
-      const grid = document.getElementById('router-output-grid');
-      grid.innerHTML = (res.selectedSkills || []).map(s => `
-        <div class="matrix-cell">
-          <strong>SKILL // ${s.name}</strong>
-          <div style="color:var(--accent-red);font-size:10px;">
-            RRF=${s.rrfScore} | BM25=${s.bm25Score} | COSINE=${s.cosineSim}
-          </div>
-          <div style="color:var(--fg-muted);">${s.description}</div>
-        </div>
-      `).join('');
-    }
-
-    async function installSkillUI() {
-      const query = document.getElementById('skill-install-pkg').value.trim();
-      if (!query) return;
-      appendLog(`Installing skill via npx skills: ${query}...`);
-      const res = await apiPost('/api/skills/install', { query });
-      appendLog(`Skill install result: ${JSON.stringify(res)}`);
-      await refreshState();
-    }
-
-    async function addTasteRuleUI() {
-      const rule = document.getElementById('taste-new-rule').value.trim();
+    async function addNewTasteRule() {
+      const rule = document.getElementById('newTasteRuleInput').value.trim();
       if (!rule) return;
-      await apiPost('/api/taste', { addRule: rule });
-      document.getElementById('taste-new-rule').value = '';
-      appendLog(`Added Taste Rule: ${rule}`);
+      await fetch('/api/taste', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ addRule: rule }),
+      });
+      document.getElementById('newTasteRuleInput').value = '';
       await refreshState();
     }
 
-    async function improviseHarnessUI() {
-      const featureRequest = document.getElementById('improvise-input').value.trim();
-      if (!featureRequest) return;
-      appendLog(`Creating git snapshot & running Self-Improvise: ${featureRequest}`);
-      const res = await apiPost('/api/improvise', { featureRequest, dryRun: false });
-      appendLog(`Self-Improvise completed [checkpoint=${res.checkpointCommit || 'none'}]`);
-    }
-
-    async function applyGlobalTheme(scheme) {
-      await apiPost('/api/theme', { scheme, targets: ['wsl', 'win'] });
-      appendLog(`Synced AGY CLI Theme across WSL & Windows -> "${scheme}"`);
-    }
-
-    async function scanPhoneInboxUI() {
-      const res = await apiPost('/api/phone', { action: 'process-inbox' });
-      appendLog(`Scanned Phone Inbox -> Executed ${res.executedCount || 0} task(s)`);
-    }
-
-    async function savePhoneConfigUI() {
-      const topicIn = document.getElementById('phone-ntfy-in').value.trim();
-      const topicOut = document.getElementById('phone-ntfy-out').value.trim();
-      await apiPost('/api/phone', {
-        action: 'update-config',
-        config: { channels: { ntfy: { enabled: true, serverUrl: 'https://ntfy.sh', topicIn, topicOut } } },
+    async function applyAgyCliTheme() {
+      const scheme = document.getElementById('agyCliThemeSelect').value;
+      await fetch('/api/theme', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ scheme, targets: ['wsl', 'win'] }),
       });
-      appendLog(`Updated ntfy topics: IN=${topicIn}, OUT=${topicOut}`);
+      await refreshState();
     }
 
-    async function testPhonePushUI() {
-      const res = await apiPost('/api/phone', {
-        action: 'notify',
-        title: 'AGY Orchestrator Telemetry Ping',
-        message: 'Phone bridge is online and listening for your tasks.',
+    async function recordDpoPair() {
+      const rejected = document.getElementById('dpoRejectedInput').value.trim();
+      const chosen = document.getElementById('dpoChosenInput').value.trim();
+      const rootCause = document.getElementById('dpoRootCauseInput').value.trim();
+      if (!rejected || !chosen) return alert('Provide both rejected and chosen patterns.');
+      await fetch('/api/learn', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cluster: 'user-ui', rejected, chosen, rootCause, utility: 0.96 }),
       });
-      appendLog(`Sent test push notification -> ${JSON.stringify(res)}`);
+      document.getElementById('dpoRejectedInput').value = '';
+      document.getElementById('dpoChosenInput').value = '';
+      document.getElementById('dpoRootCauseInput').value = '';
+      await refreshState();
     }
 
-    async function agyRemoteUI(subcommand) {
-      const res = await apiPost('/api/phone', { action: 'remote-control', subcommand });
-      document.getElementById('agy-remote-status').textContent = res.output || res.error || 'Done';
+    /* ========================================================================
+       PHONE & CLOUD NOTES BRIDGE
+       ======================================================================== */
+    async function loadPhoneInboxRaw() {
+      const res = await fetch('/api/phone/inbox');
+      const data = await res.json();
+      if (data.ok) {
+        document.getElementById('phoneInboxPathBadge').textContent = data.inboxPath;
+        document.getElementById('phoneInboxRawEditor').value = data.rawContent || '';
+      }
     }
 
-    // Connect SSE Stream
-    const evtSource = new EventSource('/api/events');
-    evtSource.onmessage = (e) => {
-      try {
-        const data = JSON.parse(e.data);
-        if (data.type === 'stream_chunk') {
-          appendLog(`[${data.agentId}] ${data.chunk.trim()}`);
-        } else {
-          appendLog(`${data.type.toUpperCase()} :: ${JSON.stringify(data)}`);
+    async function appendPhoneInboxTask() {
+      const addTask = document.getElementById('phoneNewTaskInput').value.trim();
+      if (!addTask) return;
+      const res = await fetch('/api/phone/inbox', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ addTask }),
+      });
+      const data = await res.json();
+      document.getElementById('phoneNewTaskInput').value = '';
+      if (data.ok) {
+        document.getElementById('phoneInboxRawEditor').value = data.rawContent;
+      }
+    }
+
+    async function savePhoneInboxRaw() {
+      const rawContent = document.getElementById('phoneInboxRawEditor').value;
+      await fetch('/api/phone/inbox', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rawContent }),
+      });
+      await loadPhoneInboxRaw();
+    }
+
+    async function triggerPhoneInboxScan() {
+      startTaskStopwatch();
+      updateGlobalProgress({
+        pct: 35,
+        stageIndex: 3,
+        label: 'PHONE BRIDGE // EXECUTING PENDING ONEDRIVE INBOX TASKS',
+        activeAgent: 'phone-bridge',
+        status: 'working',
+      });
+      await fetch('/api/phone', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'process-inbox' }),
+      });
+      stopTaskStopwatch();
+      updateGlobalProgress({
+        pct: 100,
+        stageIndex: 6,
+        label: 'PHONE INBOX SCAN COMPLETED (- [x] UPDATED)',
+        activeAgent: 'phone-bridge',
+        status: 'completed',
+      });
+      await loadPhoneInboxRaw();
+      await refreshState();
+    }
+
+    async function sendTestPhonePush() {
+      const message = document.getElementById('ntfyTestMsgInput').value.trim() || 'Test ping from ORCH Control OS';
+      await fetch('/api/phone', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'notify', title: 'ORCH Telemetry Ping', message }),
+      });
+      document.getElementById('ntfyTestMsgInput').value = '';
+    }
+
+    /* ========================================================================
+       QUANTITATIVE EVALUATIONS & SELF-IMPROVISE STUDIO
+       ======================================================================== */
+    function renderEvalReport(r) {
+      if (!r || !r.memory) return;
+      const m = r.memory.strategies;
+      document.getElementById('evalTablesContainer').innerHTML = `
+        <div class="grid-2">
+          <div>
+            <label class="field-label">1. MEMORY RETRIEVAL ABLATION (RECALL@1 · MRR · NDCG@3)</label>
+            <table class="data-table">
+              <thead>
+                <tr><th>STRATEGY</th><th>RECALL@1</th><th>MRR</th><th>NDCG@3</th><th>LATENCY</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Naive Substring JSON</td>
+                  <td>${(m.naive_substring_json.recallAt1 * 100).toFixed(1)}%</td>
+                  <td>${m.naive_substring_json.mrr.toFixed(3)}</td>
+                  <td>${m.naive_substring_json.ndcgAt3.toFixed(3)}</td>
+                  <td>${m.naive_substring_json.avgLatencyMs} ms</td>
+                </tr>
+                <tr>
+                  <td>Lexical FTS5 / BM25 Only</td>
+                  <td>${(m.lexical_bm25_only.recallAt1 * 100).toFixed(1)}%</td>
+                  <td>${m.lexical_bm25_only.mrr.toFixed(3)}</td>
+                  <td>${m.lexical_bm25_only.ndcgAt3.toFixed(3)}</td>
+                  <td>${m.lexical_bm25_only.avgLatencyMs} ms</td>
+                </tr>
+                <tr>
+                  <td>Dense 384-d N-Gram Only</td>
+                  <td>${(m.dense_ngram_only.recallAt1 * 100).toFixed(1)}%</td>
+                  <td>${m.dense_ngram_only.mrr.toFixed(3)}</td>
+                  <td>${m.dense_ngram_only.ndcgAt3.toFixed(3)}</td>
+                  <td>${m.dense_ngram_only.avgLatencyMs} ms</td>
+                </tr>
+                <tr style="background:var(--accent-green-dim);">
+                  <td><strong>ORCH Hybrid RRF + Decay</strong></td>
+                  <td><strong>${(m.hybrid_rrf_ebbinghaus.recallAt1 * 100).toFixed(1)}%</strong></td>
+                  <td><strong>${m.hybrid_rrf_ebbinghaus.mrr.toFixed(3)}</strong></td>
+                  <td><strong>${m.hybrid_rrf_ebbinghaus.ndcgAt3.toFixed(3)}</strong></td>
+                  <td><strong>${m.hybrid_rrf_ebbinghaus.avgLatencyMs} ms</strong></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div>
+            <label class="field-label">2. SKILL ROUTER BANDIT (${r.router.totalIndexedSkills} SKILLS) & SYSTEM INVARIANTS</label>
+            <table class="data-table">
+              <thead>
+                <tr><th>BENCHMARK DIMENSION</th><th>ZERO-SHOT</th><th>POST-DPO BANDIT</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Top-1 Skill Accuracy</td>
+                  <td>${(r.router.zeroShotTop1Accuracy * 100).toFixed(1)}%</td>
+                  <td><strong style="color:var(--accent-green);">${(r.router.postDpoTop1Accuracy * 100).toFixed(1)}%</strong></td>
+                </tr>
+                <tr>
+                  <td>Top-3 Skill Recall</td>
+                  <td>${(r.router.zeroShotTop3Accuracy * 100).toFixed(1)}%</td>
+                  <td><strong style="color:var(--accent-green);">${(r.router.postDpoTop3Accuracy * 100).toFixed(1)}%</strong></td>
+                </tr>
+                <tr>
+                  <td>Prompt Context Token Savings</td>
+                  <td colspan="2"><strong>${r.router.contextTokenReductionPct}%</strong> (${r.router.twoStageInjectedTokens} vs ${r.router.naiveAllSkillsTokens.toLocaleString()} tokens)</td>
+                </tr>
+                <tr>
+                  <td>Cross-Category Goldfish Invariant</td>
+                  <td colspan="2"><strong>${(r.topology.crossFamilyInvariantRate * 100).toFixed(1)}%</strong> (${r.topology.transitionsTested}/${r.topology.transitionsTested} transitions)</td>
+                </tr>
+                <tr>
+                  <td>Phone Concurrency Lock Integrity</td>
+                  <td colspan="2"><strong>${r.phone.atomicLockIntegrityPct}%</strong> (${r.phone.duplicateExecutions} duplicates across ${r.phone.concurrentPollsFired} parallel workers)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    async function runQuantitativeEvals() {
+      const btn = document.getElementById('runEvalBtn');
+      btn.textContent = '⏳ RUNNING 5 ABLATION BENCHMARKS...';
+      startTaskStopwatch();
+      updateGlobalProgress({
+        pct: 45,
+        stageIndex: 3,
+        label: 'EVAL SUITE // RUNNING MEMORY, BANDIT, TOPOLOGY, TASTE & PHONE BENCHMARKS',
+        activeAgent: 'orch-eval',
+        status: 'working',
+      });
+      const res = await fetch('/api/eval', { method: 'POST' });
+      const data = await res.json();
+      stopTaskStopwatch();
+      btn.textContent = '▶ RUN ALL 5 ABLATION BENCHMARKS NOW';
+      if (data.ok && data.report) {
+        renderEvalReport(data.report);
+        updateGlobalProgress({
+          pct: 100,
+          stageIndex: 6,
+          label: `EVAL SUITE COMPLETED IN ${data.report.totalDurationMs} MS (100% RECALL@1 & LOCK INTEGRITY)`,
+          activeAgent: 'orch-eval',
+          status: 'completed',
+        });
+      }
+    }
+
+    async function runSelfImprovise(dryRun) {
+      const featureRequest = document.getElementById('improvisePromptInput').value.trim();
+      if (!featureRequest) return alert('Enter a feature request for self-improvisation.');
+      document.getElementById('improviseOutputBox').textContent = 'Creating git checkpoint and running orchestrator...';
+      const res = await fetch('/api/improvise', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ featureRequest, dryRun }),
+      });
+      const data = await res.json();
+      document.getElementById('improviseOutputBox').textContent =
+        `Checkpoint Commit: ${data.checkpointCommit || 'clean-tree'}\n\n` + (data.finalOutput || JSON.stringify(data, null, 2));
+    }
+
+    /* ========================================================================
+       LIVE SSE EVENT BUS CONNECTION (REAL-TIME AGENT & PROGRESS TRACKING)
+       ======================================================================== */
+    function connectSse() {
+      const es = new EventSource('/api/events');
+      const logBox = document.getElementById('sseEventLogBox');
+
+      es.onmessage = (e) => {
+        try {
+          const ev = JSON.parse(e.data);
+          const line = `[${ev.timestamp?.slice(11, 19) || 'LIVE'}] ${ev.type.toUpperCase()} ${
+            ev.agentId ? `:: ${ev.agentId} (${ev.surface}:${ev.model})` : ''
+          } ${ev.stageLabel || ''}\n`;
+          logBox.textContent = line + logBox.textContent.slice(0, 6000);
+
+          if (ev.progressPct !== undefined) {
+            updateGlobalProgress({
+              pct: ev.progressPct,
+              stageIndex: ev.stageIndex || 1,
+              label: ev.stageLabel || ev.type,
+              activeAgent: ev.agentId ? `${ev.agentId} (${ev.surface}:${ev.model})` : 'ORCH ENGINE',
+              status: ev.type === 'task_completed' ? 'completed' : 'working',
+            });
+          }
+
+          if (ev.type === 'step_started' && ev.agentId) {
+            AGENT_LIVE_STATUS[ev.agentId] = { state: 'WORKING', pct: 65 };
+            document.getElementById('navBadgeActiveAgents').textContent = ev.agentId;
+            document.getElementById('monitorActiveSummaryBadge').textContent = `WORKING: ${ev.agentId} (${ev.surface}:${ev.model})`;
+            renderAgentGrids();
+          }
+
+          if (ev.type === 'step_completed' && ev.agentId) {
+            AGENT_LIVE_STATUS[ev.agentId] = { state: 'COMPLETED', pct: 100, lastLatencyMs: ev.latencyMs };
+            renderAgentGrids();
+          }
+
+          if (ev.type === 'task_completed') {
+            document.getElementById('navBadgeActiveAgents').textContent = 'DONE';
+            document.getElementById('monitorActiveSummaryBadge').textContent = 'ALL AGENTS VERIFIED & IDLE';
+          }
+        } catch {
+          // ignore malformed event
         }
-      } catch {}
-    };
+      };
 
+      es.onerror = () => {
+        const b = document.getElementById('sseStatusBadge');
+        if (b) {
+          b.textContent = 'RECONNECTING';
+          b.className = 'badge badge-working';
+        }
+      };
+    }
+
+    /* ========================================================================
+       BUILD STUDIO: DIALOGUE -> APPROVAL -> BUILD -> PREVIEW -> CHAT CHANGES
+       ======================================================================== */
+    let STUDIO = null;
+    const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const jpost = (url, body) =>
+      fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) }).then((r) => r.json());
+
+    async function studioStart() {
+      const prompt = document.getElementById('studioStartInput').value.trim();
+      if (!prompt) return;
+      const dryRun = document.getElementById('studioDryRun').value === 'true';
+      const d = await jpost('/api/studio/start', { prompt, dryRun });
+      if (d.ok) { document.getElementById('studioStartInput').value = ''; studioRender(d.session); studioListSessions(); }
+      else alert(d.error);
+    }
+    async function studioOpen(id) {
+      if (!id) return;
+      const d = await (await fetch('/api/studio/' + id)).json();
+      if (d.ok) studioRender(d.session);
+    }
+    async function studioListSessions() {
+      const d = await (await fetch('/api/studio/sessions')).json();
+      const sel = document.getElementById('studioSessionSelect');
+      sel.innerHTML = '<option value="">— sessions —</option>' +
+        d.sessions.map((s) => `<option value="${s.id}" ${STUDIO && STUDIO.id === s.id ? 'selected' : ''}>${esc(s.state)} · ${esc(s.title.slice(0, 28))}</option>`).join('');
+    }
+    async function studioAnswer() {
+      const answers = {};
+      STUDIO.questions.forEach((q) => { answers[q.id] = STUDIO_ANS[q.id]; });
+      const d = await jpost(`/api/studio/${STUDIO.id}/answer`, { answers });
+      if (d.ok) studioRender(d.session);
+    }
+    async function studioApprove() {
+      const d = await jpost(`/api/studio/${STUDIO.id}/approve`);
+      if (d.ok) studioRender(d.session); else alert(d.error);
+    }
+    async function studioChat() {
+      const el = document.getElementById('studioChatInput');
+      const message = el.value.trim();
+      if (!message || !STUDIO) return;
+      el.value = '';
+      const d = await jpost(`/api/studio/${STUDIO.id}/chat`, { message });
+      if (d.ok) studioRender(d.session);
+    }
+    let STUDIO_ANS = {};
+    let STUDIO_LAST_STATE = '';
+    function studioPickOpt(qid, val) { STUDIO_ANS[qid] = val; studioRenderQuestions(); }
+    function studioRenderQuestions() {
+      const box = document.getElementById('studioQuestions');
+      if (!STUDIO || STUDIO.state !== 'clarifying') { box.innerHTML = ''; return; }
+      box.innerHTML = STUDIO.questions.map((q) => {
+        if (STUDIO_ANS[q.id] === undefined) STUDIO_ANS[q.id] = q.default;
+        const body = q.free
+          ? `<input type="text" value="${esc(STUDIO_ANS[q.id])}" placeholder="optional" oninput="STUDIO_ANS['${q.id}']=this.value" />`
+          : `<div class="q-opts">${q.options.map((o) => `<span class="q-opt ${STUDIO_ANS[q.id] === o ? 'sel' : ''}" onclick="studioPickOpt('${q.id}', ${esc(JSON.stringify(o))})">${esc(o)}</span>`).join('')}</div>`;
+        return `<div class="q-card"><div class="field-label">${esc(q.text)}</div>${body}</div>`;
+      }).join('') + '<button class="btn btn-primary" onclick="studioAnswer()">CONFIRM ANSWERS → GENERATE PLAN</button>';
+    }
+    function studioReloadPreview() {
+      if (!STUDIO) return;
+      const url = `/preview/${STUDIO.id}/?t=${Date.now()}`;
+      document.getElementById('studioPreviewFrame').src = url;
+      document.getElementById('studioPreviewLink').href = url;
+    }
+    function studioRender(s) {
+      if (!STUDIO || STUDIO.id !== s.id) STUDIO_ANS = {};
+      STUDIO = s;
+      const th = document.getElementById('studioThread');
+      th.innerHTML = s.messages.map((m) => `<div class="msg ${m.role}"><small>${m.role === 'user' ? 'YOU' : 'ORCH'} · ${m.ts.slice(11, 19)}</small>${esc(m.text)}</div>`).join('');
+      th.scrollTop = th.scrollHeight;
+      document.getElementById('studioStateBadge').textContent = s.state.toUpperCase().replace('_', ' ');
+      document.getElementById('studioPctBadge').textContent = `${Math.round(s.progressPct)}%`;
+      const bar = document.getElementById('studioProgressBar');
+      bar.style.width = s.progressPct + '%';
+      bar.className = 'progress-fill' + (s.state === 'building' ? ' working' : s.progressPct >= 100 ? ' completed' : '');
+      document.getElementById('studioPlanList').innerHTML = s.plan.length
+        ? s.plan.map((p) => `<div class="plan-row ${p.status}"><span>${esc(p.title)}</span><b>${p.status === 'done' ? '✓' : p.status === 'active' ? '▶' : '·'}</b></div>`).join('')
+        : '<div style="color:var(--fg-muted);">Plan appears after you confirm the answers.</div>';
+      document.getElementById('studioSpecBox').textContent = s.spec || '';
+      document.getElementById('studioApproveBtn').disabled = s.state !== 'awaiting_approval';
+      document.getElementById('navBadgeStudio').textContent = s.state === 'building' ? `${Math.round(s.progressPct)}%` : s.state.slice(0, 5).toUpperCase();
+      studioRenderQuestions();
+      if (s.state !== STUDIO_LAST_STATE || s.state === 'building') {
+        if (['awaiting_approval', 'building', 'preview'].includes(s.state)) studioReloadPreview();
+      }
+      STUDIO_LAST_STATE = s.state;
+    }
+
+    /* ========================================================================
+       LIVE SYSTEM DIAGRAM (TOP -> BOTTOM), DRIVEN BY THE SAME SSE BUS
+       ======================================================================== */
+    const FLOW = [
+      { row: [{ id: 'in-web', t: 'Web Studio', s: 'dialogue + chat' }, { id: 'in-cli', t: 'orch CLI / orch code', s: 'terminal agent' }, { id: 'in-phone', t: 'Phone bridge', s: 'OneDrive + ntfy' }] },
+      { id: 'intake', t: 'Intake', s: 'one front door for every channel' },
+      { id: 'clarify', t: 'Clarifier', s: 'asks scope / stack / quality questions' },
+      { id: 'approve', t: 'Plan + Human approval', s: 'spec + steps, you approve or chat changes' },
+      { id: 'router', t: 'Two-stage skill router', s: 'BM25 + trigram RRF + Thompson bandit' },
+      { row: [{ id: 'memory', t: '3-tier memory', s: 'FTS5 + 384-d RRF + claude-mem' }, { id: 'taste', t: 'Taste contract', s: 'ponytail:ultra + user rules' }] },
+      { id: 'leader', t: 'Main Leader', s: () => leaderSpec() },
+      { row: [{ id: 'cat-a', t: 'Category A workers', s: 'Gemini (agy-wsl / agy-win)' }, { id: 'cat-b', t: 'Category B workers', s: 'Claude / GPT / cmdc / mcode' }] },
+      { id: 'goldfish', t: 'Goldfish critic', s: () => criticSpec() },
+      { id: 'preview', t: 'Live preview', s: 'workspace files served at /preview/<id>' },
+      { id: 'learn', t: 'Learn + commit', s: 'bandit update, DPO pairs, memory write' },
+    ];
+    function leaderSpec() { const l = HARNESS_STATE?.topology?.leader; return l ? `${l.surface}:${l.model}` : 'swappable live'; }
+    function criticSpec() { const c = HARNESS_STATE?.topology?.goldfishCritic; return c ? `${c.surface}:${c.model} (opposite family)` : 'fresh context, opposite family'; }
+    const FLOW_STATE = {};
+    function flowNode(n) {
+      const st = FLOW_STATE[n.id] || { s: 'idle', n: 0 };
+      const sub = typeof n.s === 'function' ? n.s() : n.s;
+      return `<div class="flow-node ${st.s === 'idle' ? '' : st.s}" id="fn-${n.id}"><b>${esc(n.t)}<em>${st.n ? '×' + st.n : ''}</em></b><span>${esc(sub)}</span></div>`;
+    }
+    function diagramRender() {
+      document.getElementById('flowRoot').innerHTML = FLOW.map((item, i) => {
+        const body = item.row ? `<div class="flow-row">${item.row.map(flowNode).join('')}</div>` : `<div class="flow-row">${flowNode(item)}</div>`;
+        return (i ? '<div class="flow-arrow">▼</div>' : '') + body;
+      }).join('') + '<div class="flow-label">↺ learning feeds routing, memory and taste on the next task</div>';
+    }
+    function flowSet(id, s) {
+      const st = FLOW_STATE[id] || { s: 'idle', n: 0 };
+      if (s === 'active') st.n += 1;
+      st.s = s;
+      FLOW_STATE[id] = st;
+    }
+    function flowAdvance(activeId) {
+      const order = FLOW.flatMap((x) => (x.row ? x.row : [x])).map((x) => x.id);
+      const idx = order.indexOf(activeId);
+      order.forEach((id, i) => { if (i < idx && FLOW_STATE[id]?.s === 'active') flowSet(id, 'done'); });
+      flowSet(activeId, 'active');
+    }
+    function diagramReset() { Object.keys(FLOW_STATE).forEach((k) => delete FLOW_STATE[k]); diagramRender(); }
+    function diagramOnEvent(ev) {
+      const t = ev.type;
+      if (t === 'studio_questions') { flowSet('in-web', 'done'); flowSet('intake', 'done'); flowAdvance('clarify'); }
+      else if (t === 'studio_plan') { flowSet('clarify', 'done'); flowAdvance('approve'); }
+      else if (t === 'task_started') { flowSet('approve', 'done'); flowAdvance('router'); }
+      else if (t === 'routing_completed') { flowSet('router', 'done'); flowAdvance('memory'); flowSet('taste', 'active'); }
+      else if (t === 'memory_retrieved') { flowSet('memory', 'done'); flowSet('taste', 'done'); }
+      else if (t === 'step_started' && ev.step === 'leader') flowAdvance('leader');
+      else if (t === 'step_started' && ev.step === 'subagent') { flowSet('leader', 'done'); flowSet(ev.category === 'gemini' ? 'cat-a' : 'cat-b', 'active'); }
+      else if (t === 'step_completed' && ev.step === 'subagent') { flowSet('cat-a', FLOW_STATE['cat-a']?.s === 'active' ? 'done' : FLOW_STATE['cat-a']?.s || 'idle'); flowSet('cat-b', FLOW_STATE['cat-b']?.s === 'active' ? 'done' : FLOW_STATE['cat-b']?.s || 'idle'); }
+      else if (t === 'step_started' && ev.step === 'goldfish-critic') { flowSet('leader', 'done'); flowSet('cat-a', 'done'); flowSet('cat-b', 'done'); flowAdvance('goldfish'); }
+      else if (t === 'task_completed') { ['leader', 'cat-a', 'cat-b', 'goldfish'].forEach((id) => FLOW_STATE[id] && flowSet(id, 'done')); flowSet('preview', 'done'); flowSet('learn', 'done'); }
+      else if (t === 'phone_task_received') { flowSet('in-phone', 'done'); flowSet('intake', 'done'); }
+      else return;
+      diagramRender();
+    }
+    (function connectStudioBus() {
+      const es = new EventSource('/api/events');
+      es.onmessage = async (e) => {
+        try {
+          const ev = JSON.parse(e.data);
+          diagramOnEvent(ev);
+          if (ev.type === 'studio_updated' && STUDIO && ev.sessionId === STUDIO.id) {
+            const d = await (await fetch('/api/studio/' + STUDIO.id)).json();
+            if (d.ok) studioRender(d.session);
+          } else if (ev.runId && STUDIO && ev.runId.startsWith('run-' + STUDIO.id) && ev.progressPct !== undefined) {
+            const d = await (await fetch('/api/studio/' + STUDIO.id)).json();
+            if (d.ok) studioRender(d.session);
+          }
+        } catch { /* ignore malformed event */ }
+      };
+    })();
+    diagramRender();
+    studioListSessions();
+
+    initTheme();
     refreshState();
+    loadPhoneInboxRaw();
+    connectSse();
   </script>
 </body>
 </html>

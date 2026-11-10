@@ -37,8 +37,10 @@ test('Web Control Center HTTP + SSE server serves Industrial Brutalist UI and ha
     const htmlRes = await fetch(`${baseUrl}/`);
     assert.equal(htmlRes.status, 200);
     const html = await htmlRes.text();
-    assert.ok(html.includes('#0A0A0A'));
-    assert.ok(html.includes('#E61919'));
+    assert.ok(html.includes('#090A0D'), 'dark obsidian theme');
+    assert.ok(html.includes('[data-theme="light"]'), 'light theme');
+    assert.ok(html.includes('class="sidebar"'), 'left sidebar nav');
+    assert.ok(html.includes('view-studio') && html.includes('view-diagram'));
     assert.ok(html.includes('JetBrains Mono'));
 
     // 2. Check /api/state
