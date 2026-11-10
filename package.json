@@ -1,0 +1,14 @@
+{
+  "name": "agy-orchestrator",
+  "version": "2.0.0",
+  "description": "Multi-surface (AGY WSL + AGY Win + CMDC + MCODE) & dual-category (Gemini + Claude/GPT) orchestrator harness with MemGPT/claude-mem hybrid memory, Thompson Sampling skill router, phone automation bridge, and Tactical Telemetry Web UI.",
+  "type": "module",
+  "bin": {
+    "orch": "./bin/orch.mjs"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "ui": "node ./bin/orch.mjs ui",
+    "phone": "node ./bin/orch.mjs phone-daemon"
+  }
+}
