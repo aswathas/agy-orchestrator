@@ -39,42 +39,67 @@
       "category": "gemini",
       "model": "gemini-4-argon-high",
       "effort": "high",
-      "specialties": ["architecture", "deep-reasoning", "research", "frontend_ui"]
+      "specialties": [
+        "architecture",
+        "deep-reasoning",
+        "research",
+        "frontend_ui"
+      ]
     },
     "win-gemini-worker": {
       "surface": "agy-win",
       "category": "gemini",
       "model": "gemini-3.8-flash-medium",
       "effort": "medium",
-      "specialties": ["windows_os", "fast-coding", "validation"]
+      "specialties": [
+        "windows_os",
+        "fast-coding",
+        "validation"
+      ]
     },
     "claude-coder": {
       "surface": "agy-wsl",
       "category": "claude-gpt",
       "model": "claude-sonnet-5-5-high",
       "effort": "high",
-      "specialties": ["implementation", "refactoring", "debugging", "wsl_linux"]
+      "specialties": [
+        "implementation",
+        "refactoring",
+        "debugging",
+        "wsl_linux"
+      ]
     },
     "gpt-worker": {
       "surface": "agy-win",
       "category": "claude-gpt",
       "model": "gpt-oss-120b-medium",
       "effort": "medium",
-      "specialties": ["alternative-implementation", "code-review", "windows_os"]
+      "specialties": [
+        "alternative-implementation",
+        "code-review",
+        "windows_os"
+      ]
     },
     "cmdc-worker": {
       "surface": "cmdc",
       "category": "external-cli",
       "model": "default",
       "effort": "medium",
-      "specialties": ["taste", "implementation", "refactor"]
+      "specialties": [
+        "taste",
+        "implementation",
+        "refactor"
+      ]
     },
     "mcode-fast": {
       "surface": "mcode",
       "category": "external-cli",
       "model": "default",
       "effort": "medium",
-      "specialties": ["quick-edits", "boilerplate"]
+      "specialties": [
+        "quick-edits",
+        "boilerplate"
+      ]
     }
   },
   "policies": {
@@ -85,5 +110,6 @@
     "maxSubagentConcurrency": 3,
     "enableLearningLoop": true,
     "enableTasteInjection": true
-  }
+  },
+  "updatedAt": "2026-11-10T10:38:03.361Z"
 }

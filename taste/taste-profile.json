@@ -32,6 +32,8 @@
   "customRules": [
     "Always use ?immutable=1 when reading SQLite WAL databases across WSL2 /mnt/c 9p mounts.",
     "Run Windows CLI tools (agy.exe, cmdc.cmd) with a valid Windows working directory (C:\\Users\\aswat), never a raw \\\\wsl.localhost UNC CWD.",
-    "Never leave TODO/TBD placeholders or truncated code blocks."
-  ]
+    "Never leave TODO/TBD placeholders or truncated code blocks.",
+    "always use aswath-thin"
+  ],
+  "updatedAt": "2026-11-10T10:44:58.673Z"
 }

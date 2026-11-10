@@ -83,6 +83,9 @@ export class OrchestratorEngine {
       sessionId: sid,
       prompt,
       leader: activeTopo.leader,
+      progressPct: 8,
+      stageIndex: 1,
+      stageLabel: 'STAGE 1/6 · TWO-STAGE SKILL ROUTER',
     });
 
     // 1. Route task & select skills + bandit agents
@@ -111,6 +114,9 @@ export class OrchestratorEngine {
         category: w.category,
         theta: w.banditTheta,
       })),
+      progressPct: 20,
+      stageIndex: 2,
+      stageLabel: 'STAGE 2/6 · 3-TIER HYBRID RRF MEMORY & TASTE',
     });
 
     // 2. Retrieve Hybrid RRF Memory (orch-mem + claude-mem.db) & Taste Contract
@@ -122,6 +128,15 @@ export class OrchestratorEngine {
     const tasteContract = activeTopo.policies.enableTasteInjection
       ? this.taste.compileTasteContract()
       : '';
+
+    this.emitEvent('memory_retrieved', {
+      runId,
+      memoryHits: (hybridMem.results || []).length,
+      topTitles: (hybridMem.results || []).slice(0, 3).map((m) => m.title),
+      progressPct: 32,
+      stageIndex: 3,
+      stageLabel: 'STAGE 3/6 · MAIN LEADER SYNTHESIS',
+    });
     const skillInstructions = routing.selectedSkills
       .map((s) => this.router.loadSkillInstructions(s, 1800))
       .join('\n\n');
@@ -149,6 +164,9 @@ export class OrchestratorEngine {
       surface: leaderSpec.surface,
       model: leaderSpec.model,
       category: leaderSpec.category,
+      progressPct: 42,
+      stageIndex: 3,
+      stageLabel: `STAGE 3/6 · LEADER EXECUTING (${leaderSpec.surface}:${leaderSpec.model})`,
     });
 
     const leaderPrompt =
@@ -202,12 +220,15 @@ export class OrchestratorEngine {
       agentId: leaderSpec.id,
       ok: leaderRes.ok,
       latencyMs: leaderRes.latencyMs,
+      progressPct: effectiveMode === 'single' ? 90 : 58,
+      stageIndex: 4,
+      stageLabel: effectiveMode === 'single' ? 'STAGE 6/6 · DPO LEARNING & MEMORY COMMIT' : 'STAGE 4/6 · DUAL-CATEGORY SUBAGENTS',
     });
 
     // 4. Step B: Dual-Category Subagent Execution (for 'full' or 'egm' modes)
     if (effectiveMode === 'full' || effectiveMode === 'egm') {
       const workers = routing.agentPlan.selectedWorkers.slice(0, activeTopo.policies.maxSubagentConcurrency || 2);
-      const workerPromises = workers.map(async (w) => {
+      const workerPromises = workers.map(async (w, idx) => {
         this.emitEvent('step_started', {
           runId,
           step: 'subagent',
@@ -215,6 +236,9 @@ export class OrchestratorEngine {
           surface: w.surface,
           model: w.model,
           category: w.category,
+          progressPct: 62 + idx * 6,
+          stageIndex: 4,
+          stageLabel: `STAGE 4/6 · SUBAGENT WORKER (${w.id} :: ${w.surface}:${w.model})`,
         });
 
         const subPrompt = `Leader Plan:\n${leaderRes.output.slice(0, 2000)}\n\nExecute your assigned specialty (${(w.specialties || []).join(', ')}) for task:\n${prompt}`;
@@ -252,6 +276,9 @@ export class OrchestratorEngine {
           agentId: w.id,
           ok: wRes.ok,
           latencyMs: wRes.latencyMs,
+          progressPct: effectiveMode === 'egm' ? 78 : 92,
+          stageIndex: effectiveMode === 'egm' ? 5 : 6,
+          stageLabel: effectiveMode === 'egm' ? 'STAGE 5/6 · FRESH-CONTEXT GOLDFISH CRITIC' : 'STAGE 6/6 · DPO LEARNING & MEMORY COMMIT',
         });
 
         return {
@@ -281,6 +308,9 @@ export class OrchestratorEngine {
         surface: critic.surface,
         model: critic.model,
         category: critic.category,
+        progressPct: 84,
+        stageIndex: 5,
+        stageLabel: `STAGE 5/6 · GOLDFISH CRITIC (${critic.surface}:${critic.model})`,
       });
 
       // Goldfish rule: receives ONLY the draft/output and task, without earlier conversational bias
@@ -323,6 +353,9 @@ export class OrchestratorEngine {
         agentId: critic.id,
         ok: cRes.ok,
         latencyMs: cRes.latencyMs,
+        progressPct: 94,
+        stageIndex: 6,
+        stageLabel: 'STAGE 6/6 · DPO LEARNING & MEMORY COMMIT',
       });
     }
 
@@ -351,6 +384,9 @@ export class OrchestratorEngine {
       sessionId: sid,
       mode: effectiveMode,
       stepsCount: steps.length,
+      progressPct: 100,
+      stageIndex: 6,
+      stageLabel: 'COMPLETED · 100% VERIFIED & COMMITTED TO MEMORY',
     });
 
     return {

@@ -1,13 +1,15 @@
 import { createServer } from 'node:http';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { AGY_MODEL_CATALOG, VALID_SURFACES } from '../topology/controller.mjs';
 import { getAgyThemesStatus, setAgyTheme } from '../adapters/path-bridge.mjs';
 import { runBrain } from '../adapters/index.mjs';
+import { OrchEvaluationSuite } from '../eval/benchmark.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const HTML_PATH = join(__dirname, 'index.html');
+const EVAL_RESULTS_PATH = join(__dirname, '..', '..', 'eval', 'results.json');
 
 function readBody(req) {
   return new Promise((resolve, reject) => {
@@ -93,24 +95,36 @@ export async function startDashboardServer({
       if (req.method === 'GET' && path === '/api/state') {
         const topology = engine.topology.load();
         const taste = engine.taste.loadProfile();
+        const tasteContract = engine.taste.compileTasteContract();
         const memStats = await engine.memory.getStats();
         const bandit = engine.learning.getBanditStats();
         const themes = getAgyThemesStatus();
         const phone = phoneBridge ? phoneBridge.status() : null;
+        let evalReport = null;
+        if (existsSync(EVAL_RESULTS_PATH)) {
+          try {
+            evalReport = JSON.parse(readFileSync(EVAL_RESULTS_PATH, 'utf8'));
+          } catch {
+            evalReport = null;
+          }
+        }
         return sendJson(res, 200, {
           ok: true,
           topology,
           catalog: AGY_MODEL_CATALOG,
           surfaces: VALID_SURFACES,
           taste,
+          tasteContract,
           memory: memStats,
           bandit,
           themes,
           phone,
+          evalReport,
           skillsCount: engine.router.catalog.length,
-          skillsSample: engine.router.catalog.slice(0, 60).map((s) => ({
+          skillsSample: engine.router.catalog.slice(0, 310).map((s) => ({
             name: s.name,
-            description: s.description.slice(0, 140),
+            folderName: s.folderName,
+            description: s.description.slice(0, 160),
           })),
         });
       }
@@ -277,6 +291,39 @@ export async function startDashboardServer({
           dryRun: Boolean(body.dryRun),
         });
         return sendJson(res, 200, imp);
+      }
+
+      if ((req.method === 'GET' || req.method === 'POST') && path === '/api/eval') {
+        if (req.method === 'GET' && existsSync(EVAL_RESULTS_PATH)) {
+          return sendJson(res, 200, {
+            ok: true,
+            report: JSON.parse(readFileSync(EVAL_RESULTS_PATH, 'utf8')),
+          });
+        }
+        engine.emitEvent('eval_started', { timestamp: new Date().toISOString() });
+        const suite = new OrchEvaluationSuite();
+        const { report } = await suite.runAll();
+        engine.emitEvent('eval_completed', { timestamp: new Date().toISOString(), durationMs: report.totalDurationMs });
+        return sendJson(res, 200, { ok: true, report });
+      }
+
+      if ((req.method === 'GET' || req.method === 'POST') && path === '/api/phone/inbox') {
+        const cfg = phoneBridge ? phoneBridge.loadConfig() : null;
+        const inboxPath =
+          cfg?.channels?.cloudNotesInbox?.inboxPath ||
+          join(__dirname, '..', '..', 'memory', 'Phone-Inbox.md');
+        if (req.method === 'POST') {
+          const body = await readBody(req);
+          if (body.addTask) {
+            const cur = existsSync(inboxPath) ? readFileSync(inboxPath, 'utf8') : '# Phone Inbox\n\n## Tasks\n';
+            const next = cur.trimEnd() + `\n- [ ] ${body.addTask.trim()}\n`;
+            writeFileSync(inboxPath, next, 'utf8');
+          } else if (typeof body.rawContent === 'string') {
+            writeFileSync(inboxPath, body.rawContent, 'utf8');
+          }
+        }
+        const rawContent = existsSync(inboxPath) ? readFileSync(inboxPath, 'utf8') : '';
+        return sendJson(res, 200, { ok: true, inboxPath, rawContent });
       }
 
       return sendJson(res, 404, { ok: false, error: `Not found: ${path}` });
