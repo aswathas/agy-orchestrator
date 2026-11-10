@@ -67,9 +67,10 @@ export class OrchestratorEngine {
       cwd = '/home/aswath',
       dryRun = false,
       timeoutMs = 180000,
+      runId: presetRunId = null,
     } = {}
   ) {
-    const runId = `run-${Date.now()}`;
+    const runId = presetRunId || `run-${Date.now()}`;
     const topo = this.topology.load();
     const sid = sessionId || topo.activeSessionId || 'default';
 

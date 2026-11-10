@@ -6,6 +6,7 @@ import { AGY_MODEL_CATALOG, VALID_SURFACES } from '../topology/controller.mjs';
 import { getAgyThemesStatus, setAgyTheme } from '../adapters/path-bridge.mjs';
 import { runBrain } from '../adapters/index.mjs';
 import { OrchEvaluationSuite } from '../eval/benchmark.mjs';
+import { StudioManager } from '../studio/session.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const HTML_PATH = join(__dirname, 'index.html');
@@ -46,6 +47,7 @@ export async function startDashboardServer({
   host = '127.0.0.1',
 }) {
   const sseClients = new Set();
+  const studio = new StudioManager({ engine });
 
   const onEngineEvent = (ev) => {
     const msg = `data: ${JSON.stringify(ev)}\n\n`;
@@ -291,6 +293,36 @@ export async function startDashboardServer({
           dryRun: Boolean(body.dryRun),
         });
         return sendJson(res, 200, imp);
+      }
+
+      if (path.startsWith('/preview/')) {
+        const [, , sid, ...rest] = path.split('/');
+        const out = studio.servePreview(sid, rest.length ? '/' + rest.join('/') : '/');
+        res.writeHead(out.status, { 'Content-Type': out.type, 'Cache-Control': 'no-store' });
+        return res.end(out.body);
+      }
+
+      if (path === '/api/studio/sessions' && req.method === 'GET') {
+        return sendJson(res, 200, { ok: true, sessions: studio.list() });
+      }
+      if (path === '/api/studio/start' && req.method === 'POST') {
+        const b = await readBody(req);
+        if (!String(b.prompt || '').trim()) throw new Error('prompt required');
+        return sendJson(res, 200, { ok: true, session: studio.start(b.prompt.trim(), { dryRun: b.dryRun !== false, mode: b.mode || 'egm' }) });
+      }
+      const sm = path.match(/^\/api\/studio\/(st-[a-z0-9]+)(?:\/(answer|approve|chat))?$/);
+      if (sm) {
+        const [, sid, action] = sm;
+        if (req.method === 'GET' && !action) return sendJson(res, 200, { ok: true, session: studio.get(sid) });
+        if (req.method === 'POST') {
+          const b = await readBody(req);
+          const session =
+            action === 'answer' ? studio.answer(sid, b.answers)
+            : action === 'approve' ? studio.approve(sid)
+            : action === 'chat' ? studio.chat(sid, String(b.message || '').trim())
+            : null;
+          if (session) return sendJson(res, 200, { ok: true, session });
+        }
       }
 
       if ((req.method === 'GET' || req.method === 'POST') && path === '/api/eval') {

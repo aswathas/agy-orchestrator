@@ -11,3 +11,4 @@ router/bandit-state.json
 learning/*.jsonl
 learning/*.json
 taste/taste-events.jsonl
+workspaces/
