@@ -74,3 +74,10 @@ Granular step-by-step audit trail of architectural decisions, user prompts, fail
 - **Implementation Action**: Authored WHITEPAPER.md, README.md, and generated 11-page vector-typeset docs/WHITEPAPER.pdf via PyMuPDF Story
 
 ---
+## [2026-11-10 08:32:41 UTC] Quantitative Evaluation & Ablation Suite (orch eval)
+
+- **User Prompt / Trigger**: also add evaluations
+- **Architectural Decision**: Built OrchEvaluationSuite (src/eval/benchmark.mjs) measuring Memory Retrieval Ablations (Naive vs BM25 vs Dense vs Hybrid RRF+Decay), Two-Stage Skill Bandit Convergence & Token Compression across 305 skills, Cross-Category Topology Invariants, Taste Classifier F1, and Phone Concurrency Stress Tests
+- **Implementation Action**: Expanded SKILL_DIRS to include /mnt/c/Users/aswat/.claude/skills (305 skills), calibrated Thompson Sampling posterior boost, added orch eval CLI & test/eval.test.mjs, and updated WHITEPAPER.md + 12-page docs/WHITEPAPER.pdf
+
+---
