@@ -1,0 +1,89 @@
+{
+  "version": 2,
+  "activeSessionId": "default",
+  "leader": {
+    "id": "leader-main",
+    "surface": "agy-wsl",
+    "category": "claude-gpt",
+    "model": "claude-opus-5-5-high",
+    "effort": "high",
+    "role": "Main Architect & Elephant Coordinator"
+  },
+  "router": {
+    "id": "thinking-router",
+    "surface": "agy-wsl",
+    "category": "gemini",
+    "model": "gemini-3.8-flash-high",
+    "effort": "medium",
+    "role": "Two-Stage Thinking Skill Router & Bandit Selector"
+  },
+  "goldfishCritic": {
+    "id": "goldfish-critic",
+    "surface": "agy-wsl",
+    "category": "gemini",
+    "model": "gemini-4-argon-high",
+    "effort": "high",
+    "role": "Fresh-Context EGM Goldfish Reviewer"
+  },
+  "tasteCritic": {
+    "id": "taste-critic",
+    "surface": "cmdc",
+    "category": "taste",
+    "model": "default",
+    "effort": "medium",
+    "role": "User Taste & Ponytail Quality Gate"
+  },
+  "subagents": {
+    "gemini-architect": {
+      "surface": "agy-wsl",
+      "category": "gemini",
+      "model": "gemini-4-argon-high",
+      "effort": "high",
+      "specialties": ["architecture", "deep-reasoning", "research", "frontend_ui"]
+    },
+    "win-gemini-worker": {
+      "surface": "agy-win",
+      "category": "gemini",
+      "model": "gemini-3.8-flash-medium",
+      "effort": "medium",
+      "specialties": ["windows_os", "fast-coding", "validation"]
+    },
+    "claude-coder": {
+      "surface": "agy-wsl",
+      "category": "claude-gpt",
+      "model": "claude-sonnet-5-5-high",
+      "effort": "high",
+      "specialties": ["implementation", "refactoring", "debugging", "wsl_linux"]
+    },
+    "gpt-worker": {
+      "surface": "agy-win",
+      "category": "claude-gpt",
+      "model": "gpt-oss-120b-medium",
+      "effort": "medium",
+      "specialties": ["alternative-implementation", "code-review", "windows_os"]
+    },
+    "cmdc-worker": {
+      "surface": "cmdc",
+      "category": "external-cli",
+      "model": "default",
+      "effort": "medium",
+      "specialties": ["taste", "implementation", "refactor"]
+    },
+    "mcode-fast": {
+      "surface": "mcode",
+      "category": "external-cli",
+      "model": "default",
+      "effort": "medium",
+      "specialties": ["quick-edits", "boilerplate"]
+    }
+  },
+  "policies": {
+    "requireBothModelCategories": true,
+    "complexityGateThreshold": 0.4,
+    "defaultExecutionMode": "adaptive",
+    "autoInstallMissingSkills": true,
+    "maxSubagentConcurrency": 3,
+    "enableLearningLoop": true,
+    "enableTasteInjection": true
+  }
+}
