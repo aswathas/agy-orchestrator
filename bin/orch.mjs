@@ -7,6 +7,7 @@ import { getAgyThemesStatus, setAgyTheme } from '../src/adapters/path-bridge.mjs
 import { parseAgentSpec } from '../src/topology/controller.mjs';
 import { runBrain } from '../src/adapters/index.mjs';
 import { OrchEvaluationSuite } from '../src/eval/benchmark.mjs';
+import { OrchCodeShell } from '../src/cli/shell.mjs';
 
 const args = process.argv.slice(2);
 const cmd = args[0] || 'status';
@@ -263,7 +264,23 @@ async function main() {
     return;
   }
 
-  if (cmd === 'repl') {
+  if (cmd === 'code' || cmd === 'chat' || cmd === 'repl') {
+    const shell = new OrchCodeShell({
+      engine,
+      dryRun: !hasFlag('--live'),
+      mode: getFlag('--mode', 'egm'),
+      port: Number(getFlag('--port', '4888')),
+    });
+    const printPrompt = getFlag('-p') || getFlag('--print');
+    if (printPrompt) {
+      await shell.runOnce(printPrompt);
+      process.exit(0);
+    }
+    await shell.run();
+    process.exit(0);
+  }
+
+  if (cmd === 'repl-legacy') {
     console.log('ORCH Interactive Console — commands: status, leader <spec>, swap <id>, route <q>, run <task>, exit');
     const rl = readline.createInterface({ input: process.stdin, output: process.stdout, prompt: 'orch> ' });
     rl.prompt();
@@ -308,7 +325,8 @@ async function main() {
     '  phone [scan|daemon]                    Scan or watch OneDrive/Phone Inbox & ntfy.sh',
     '  eval [--json]                          Run quantitative ablation & evaluation suite (Memory, Bandit, Topology, Taste, Phone)',
     '  ui [--port 4888]                       Start Tactical Telemetry Web Control Center + Phone Daemon',
-    '  repl                                   Interactive orchestrator shell',
+    '  code [--live] [--mode egm] [-p "goal"]  Interactive agent shell (dialogue -> plan -> build -> chat changes); -p = one-shot',
+    '  repl                                   Alias of code',
   ].join('\n'));
 }
 
