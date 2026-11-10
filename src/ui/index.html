@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ORCH // AGY MULTI-SURFACE TACTICAL TELEMETRY CONTROL CENTER</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-carbon: #0A0A0A;
+      --bg-cell: #121212;
+      --bg-elevated: #181818;
+      --fg-phosphor: #EAEAEA;
+      --fg-muted: #787878;
+      --fg-dim: #444444;
+      --accent-red: #E61919;
+      --status-green: #4AF626;
+      --grid-line: #262626;
+      --font-macro: 'Archivo Black', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      border-radius: 0 !important;
+    }
+
+    body {
+      background-color: var(--bg-carbon);
+      color: var(--fg-phosphor);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1.35;
+      letter-spacing: 0.04em;
+      min-height: 100dvh;
+      overflow-x: hidden;
+    }
+
+    /* CRT Scanline + Mechanical Grain Overlay (Fixed Pointer-Events-None per design-taste-frontend) */
+    .crt-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 999;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 0, 0, 0.16) 2px,
+        rgba(0, 0, 0, 0.16) 4px
+      );
+    }
+
+    /* Top Telemetry Header */
+    .top-bar {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 1px;
+      background: var(--grid-line);
+      border-bottom: 2px solid var(--accent-red);
+    }
+
+    .top-bar > div {
+      background: var(--bg-carbon);
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .macro-title {
+      font-family: var(--font-macro);
+      font-size: clamp(1.3rem, 2.5vw, 2.2rem);
+      letter-spacing: -0.04em;
+      line-height: 0.9;
+      text-transform: uppercase;
+      color: var(--fg-phosphor);
+    }
+
+    .macro-title span {
+      color: var(--accent-red);
+    }
+
+    .live-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 4px 10px;
+      border: 1px solid var(--grid-line);
+      background: var(--bg-cell);
+    }
+
+    /* Single Terminal Green element per industrial-brutalist-ui rule 4 */
+    .heartbeat-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--status-green);
+      display: inline-block;
+    }
+
+    /* Navigation Tabs */
+    .nav-strip {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 1px;
+      background: var(--grid-line);
+      border-bottom: 1px solid var(--grid-line);
+    }
+
+    .nav-btn {
+      background: var(--bg-cell);
+      color: var(--fg-muted);
+      border: none;
+      padding: 12px 14px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      text-align: left;
+      cursor: pointer;
+      transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), background 0.15s, color 0.15s;
+    }
+
+    .nav-btn:hover {
+      background: var(--bg-elevated);
+      color: var(--fg-phosphor);
+    }
+
+    .nav-btn:active {
+      transform: scale(0.98);
+    }
+
+    .nav-btn.active {
+      background: var(--bg-carbon);
+      color: var(--fg-phosphor);
+      border-top: 3px solid var(--accent-red);
+    }
+
+    /* Blueprint 1px Grid Layout */
+    .blueprint-grid {
+      display: grid;
+      grid-template-columns: 1.35fr 1fr;
+      gap: 1px;
+      background: var(--grid-line);
+      min-height: calc(100dvh - 115px);
+    }
+
+    @media (max-width: 960px) {
+      .blueprint-grid {
+        grid-template-columns: 1fr;
+      }
+      .nav-strip {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .panel {
+      background: var(--bg-carbon);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      border-bottom: 1px solid var(--grid-line);
+      padding-bottom: 8px;
+    }
+
+    .section-head h2 {
+      font-family: var(--font-macro);
+      font-size: 15px;
+      letter-spacing: -0.02em;
+      text-transform: uppercase;
+    }
+
+    .section-tag {
+      color: var(--accent-red);
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    /* Controls & Forms */
+    label {
+      display: block;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--fg-muted);
+      margin-bottom: 5px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      background: var(--bg-cell);
+      color: var(--fg-phosphor);
+      border: 1px solid var(--grid-line);
+      padding: 9px 11px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      outline: none;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--accent-red);
+    }
+
+    .btn {
+      background: var(--bg-elevated);
+      color: var(--fg-phosphor);
+      border: 1px solid var(--grid-line);
+      padding: 9px 14px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      transition: transform 0.12s cubic-bezier(0.16, 1, 0.3, 1), background 0.12s;
+    }
+
+    .btn:hover {
+      border-color: var(--fg-phosphor);
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn-red {
+      background: var(--accent-red);
+      color: #FFFFFF;
+      border-color: var(--accent-red);
+    }
+
+    /* Data Matrix & Cards */
+    .matrix-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1px;
+      background: var(--grid-line);
+      border: 1px solid var(--grid-line);
+    }
+
+    .matrix-cell {
+      background: var(--bg-cell);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .matrix-cell.leader-highlight {
+      background: #170C0C;
+      border-left: 3px solid var(--accent-red);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 6px;
+      font-size: 10px;
+      text-transform: uppercase;
+      border: 1px solid var(--grid-line);
+      background: var(--bg-carbon);
+    }
+
+    .badge-gemini {
+      border-color: #EAEAEA;
+      color: #EAEAEA;
+    }
+
+    .badge-claude {
+      border-color: var(--accent-red);
+      color: var(--accent-red);
+    }
+
+    .terminal-log {
+      background: #060606;
+      border: 1px solid var(--grid-line);
+      padding: 12px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      height: 360px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      color: var(--fg-phosphor);
+    }
+
+    .row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .row-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="crt-overlay"></div>
+
+  <!-- HEADER -->
+  <header class="top-bar">
+    <div>
+      <div class="macro-title">ORCH<span>®</span> // TACTICAL HARNESS</div>
+      <span class="section-tag">[ AGY-WSL + AGY-WIN + CMDC + MCODE ]</span>
+    </div>
+    <div>
+      <span class="live-pill">
+        <span class="heartbeat-dot"></span>
+        <data id="sse-status">TELEMETRY ONLINE</data>
+      </span>
+      <span class="live-pill" id="header-leader-readout">LEADER: LOADING...</span>
+    </div>
+    <div>
+      <label style="margin:0 8px 0 0;">AGY THEME</label>
+      <select id="global-theme-select" style="width:170px;" onchange="applyGlobalTheme(this.value)">
+        <option value="tokyo night">tokyo night</option>
+        <option value="solarized dark">solarized dark</option>
+        <option value="dark">dark</option>
+        <option value="colorblind-friendly dark">colorblind-friendly dark</option>
+        <option value="terminal">terminal</option>
+        <option value="light">light</option>
+        <option value="solarized light">solarized light</option>
+        <option value="colorblind-friendly light">colorblind-friendly light</option>
+      </select>
+    </div>
+  </header>
+
+  <!-- NAVIGATION -->
+  <nav class="nav-strip">
+    <button class="nav-btn active" onclick="switchTab('tab-topology', this)">01 // TOPOLOGY &amp; LEADER</button>
+    <button class="nav-btn" onclick="switchTab('tab-dispatch', this)">02 // TASK DISPATCH &amp; EGM</button>
+    <button class="nav-btn" onclick="switchTab('tab-memory', this)">03 // CLAUDE-MEM &amp; RRF</button>
+    <button class="nav-btn" onclick="switchTab('tab-router', this)">04 // SKILL ROUTER &amp; BANDIT</button>
+    <button class="nav-btn" onclick="switchTab('tab-taste', this)">05 // TASTE &amp; SELF-EVOLVE</button>
+    <button class="nav-btn" onclick="switchTab('tab-phone', this)">06 // PHONE AUTOMATION</button>
+  </nav>
+
+  <!-- MAIN BLUEPRINT GRID -->
+  <main class="blueprint-grid">
+    <!-- LEFT COLUMN: ACTIVE CONTROL WORKSPACE -->
+    <section class="panel">
+
+      <!-- TAB 01: TOPOLOGY & LEADER SWITCHBOARD -->
+      <div id="tab-topology" class="tab-pane">
+        <div class="section-head">
+          <h2>[ 01 // DYNAMIC LEADER &amp; SUBAGENT TOPOLOGY ]</h2>
+          <span class="section-tag">LIVE HOT-SWAPPABLE</span>
+        </div>
+
+        <div style="margin-top:14px;" class="matrix-cell leader-highlight">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <strong>ACTIVE MAIN LEADER (ELEPHANT COORDINATOR)</strong>
+            <span class="badge badge-claude" id="leader-cat-badge">CATEGORY</span>
+          </div>
+          <div id="leader-current-text" style="font-size:15px;font-weight:700;margin:4px 0;">-</div>
+          <div class="row-3" style="margin-top:8px;">
+            <div>
+              <label>SURFACE</label>
+              <select id="leader-surface">
+                <option value="agy-wsl">agy-wsl (Linux WSL)</option>
+                <option value="agy-win">agy-win (Windows EXE)</option>
+                <option value="cmdc">cmdc (Command Code)</option>
+                <option value="mcode">mcode (MiniMax Code)</option>
+              </select>
+            </div>
+            <div>
+              <label>MODEL (GEMINI OR CLAUDE/GPT)</label>
+              <select id="leader-model"></select>
+            </div>
+            <div>
+              <label>REASONING EFFORT</label>
+              <select id="leader-effort">
+                <option value="high">high</option>
+                <option value="medium">medium</option>
+                <option value="low">low</option>
+                <option value="xhigh">xhigh</option>
+                <option value="max">max</option>
+              </select>
+            </div>
+          </div>
+          <div style="margin-top:10px;display:flex;gap:10px;">
+            <button class="btn btn-red" onclick="setLeaderFromUI()">>>> APPLY MAIN LEADER</button>
+            <button class="btn" onclick="refreshState()">REFRESH ROSTER</button>
+          </div>
+        </div>
+
+        <div class="section-head" style="margin-top:20px;">
+          <h2>[ SUBAGENT WORKER POOL — ONE-CLICK SWAP WITH LEADER ]</h2>
+          <span class="section-tag">GEMINI + CLAUDE/GPT</span>
+        </div>
+        <div id="subagents-grid" class="matrix-grid" style="margin-top:12px;"></div>
+
+        <div class="section-head" style="margin-top:20px;">
+          <h2>[ ADD OR UPDATE SUBAGENT WORKER ]</h2>
+          <span class="section-tag">CUSTOM AGENT</span>
+        </div>
+        <div class="row-3" style="margin-top:10px;">
+          <div>
+            <label>WORKER ID</label>
+            <input id="new-worker-id" placeholder="e.g. win-opus-auditor" />
+          </div>
+          <div>
+            <label>SURFACE : MODEL</label>
+            <input id="new-worker-spec" placeholder="e.g. agy-win:claude-opus-5-5-high" />
+          </div>
+          <div>
+            <label>SPECIALTIES (COMMA SEP)</label>
+            <input id="new-worker-spec-tags" placeholder="architecture,windows_os,security" />
+          </div>
+        </div>
+        <button class="btn" style="margin-top:10px;" onclick="upsertWorkerUI()">+ UPSERT SUBAGENT WORKER</button>
+      </div>
+
+      <!-- TAB 02: TASK DISPATCH & EGM -->
+      <div id="tab-dispatch" class="tab-pane hidden">
+        <div class="section-head">
+          <h2>[ 02 // MULTI-SURFACE TASK DISPATCHER ]</h2>
+          <span class="section-tag">ELEPHANT + GOLDFISH</span>
+        </div>
+        <div style="margin-top:14px;">
+          <label>TASK INSTRUCTION / PROMPT</label>
+          <textarea id="task-prompt" rows="4" placeholder="Describe what you want the Leader + Dual-Category Subagents to build, debug, or review..."></textarea>
+        </div>
+        <div class="row-3" style="margin-top:10px;">
+          <div>
+            <label>ORCHESTRATION MODE</label>
+            <select id="task-mode">
+              <option value="">adaptive (Complexity Gate)</option>
+              <option value="full">full (Leader + Gemini &amp; Claude/GPT Workers)</option>
+              <option value="egm">egm (Elephant Draft + Fresh Goldfish Critic)</option>
+              <option value="single">single (Fast Single-Hop Leader)</option>
+            </select>
+          </div>
+          <div>
+            <label>SESSION CONTEXT ID</label>
+            <input id="task-session" value="default" />
+          </div>
+          <div>
+            <label>EXECUTION TYPE</label>
+            <select id="task-dryrun">
+              <option value="false">LIVE CLI EXECUTION</option>
+              <option value="true">FAST DRY-RUN SIMULATION</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:10px;">
+          <button class="btn btn-red" onclick="dispatchTaskUI()">>>> EXECUTE ORCHESTRATED RUN</button>
+          <button class="btn" onclick="previewRouteUI()">PREVIEW SKILL &amp; BANDIT ROUTING</button>
+        </div>
+        <div id="dispatch-result-box" class="terminal-log" style="margin-top:14px;height:280px;">AWAITING TASK DISPATCH...</div>
+      </div>
+
+      <!-- TAB 03: CLAUDE-MEM & HYBRID RRF MEMORY -->
+      <div id="tab-memory" class="tab-pane hidden">
+        <div class="section-head">
+          <h2>[ 03 // 3-TIER MEMGPT + CLAUDE-MEM HYBRID RRF ENGINE ]</h2>
+          <span class="section-tag" id="mem-stats-badge">LOADING...</span>
+        </div>
+        <div class="row-2" style="margin-top:12px;">
+          <div>
+            <label>HYBRID BM25 (FTS5) + 384-D VECTOR COSINE SEARCH</label>
+            <input id="mem-search-input" placeholder="Search across 9,541+ claude-mem observations &amp; orch-mem..." />
+          </div>
+          <div style="display:flex;align-items:flex-end;gap:8px;">
+            <button class="btn btn-red" onclick="searchMemoryUI()">>>> RUN RRF SEARCH</button>
+          </div>
+        </div>
+        <div id="mem-results-grid" class="matrix-grid" style="margin-top:14px;"></div>
+
+        <div class="section-head" style="margin-top:20px;">
+          <h2>[ PIN NEW SHARED WHOLE MEMORY FACT ]</h2>
+          <span class="section-tag">CROSS-OS PERSISTENT</span>
+        </div>
+        <div class="row-2" style="margin-top:10px;">
+          <div>
+            <label>TITLE</label>
+            <input id="mem-new-title" placeholder="Fact or Architectural Decision Title" />
+          </div>
+          <div>
+            <label>TAGS (COMMA SEP)</label>
+            <input id="mem-new-tags" placeholder="architecture,wsl,windows" />
+          </div>
+        </div>
+        <div style="margin-top:8px;">
+          <label>CONTENT</label>
+          <textarea id="mem-new-content" rows="2" placeholder="Durable fact shared between AGY WSL, AGY Win, CMDC, and MCODE..."></textarea>
+        </div>
+        <button class="btn" style="margin-top:8px;" onclick="storeMemoryUI()">+ STORE IN HYBRID MEMORY</button>
+      </div>
+
+      <!-- TAB 04: THINKING SKILL ROUTER & BANDIT -->
+      <div id="tab-router" class="tab-pane hidden">
+        <div class="section-head">
+          <h2>[ 04 // TWO-STAGE THINKING SKILL ROUTER &amp; BANDIT ]</h2>
+          <span class="section-tag" id="skills-count-badge">85+ SKILLS</span>
+        </div>
+        <div class="row-2" style="margin-top:12px;">
+          <div>
+            <label>TEST PROMPT FOR SKILL &amp; BANDIT ROUTING</label>
+            <input id="router-test-input" placeholder="e.g. Build scroll-triggered 3D hero with GSAP and audit security" />
+          </div>
+          <div style="display:flex;align-items:flex-end;gap:8px;">
+            <button class="btn btn-red" onclick="testSkillRouterUI()">>>> SIMULATE ROUTER</button>
+          </div>
+        </div>
+        <div id="router-output-grid" class="matrix-grid" style="margin-top:12px;"></div>
+
+        <div class="section-head" style="margin-top:20px;">
+          <h2>[ ON-DEMAND SKILL DOWNLOADER (NPX SKILLS) &amp; SYNTHESIZER ]</h2>
+          <span class="section-tag">DYNAMIC CAPABILITY</span>
+        </div>
+        <div class="row-2" style="margin-top:10px;">
+          <div>
+            <label>INSTALL SKILL PACKAGE FROM NPX SKILLS REGISTRY</label>
+            <input id="skill-install-pkg" placeholder="e.g. vercel-labs/agent-skills" />
+          </div>
+          <div style="display:flex;align-items:flex-end;">
+            <button class="btn" onclick="installSkillUI()">>>> DOWNLOAD &amp; MOUNT SKILL</button>
+          </div>
+        </div>
+        <div class="section-head" style="margin-top:20px;">
+          <h2>[ THOMPSON SAMPLING BANDIT POSTERIORS — BETA(ALPHA, BETA) ]</h2>
+          <span class="section-tag">ONLINE RL</span>
+        </div>
+        <div id="bandit-arms-grid" class="matrix-grid" style="margin-top:10px;"></div>
+      </div>
+
+      <!-- TAB 05: TASTE ENGINE, LEARNING LOOP & SELF-IMPROVISER -->
+      <div id="tab-taste" class="tab-pane hidden">
+        <div class="section-head">
+          <h2>[ 05 // USER TASTE CONTRACT &amp; CONTRASTIVE LEARNING LOOP ]</h2>
+          <span class="section-tag">PONYTAIL:ULTRA</span>
+        </div>
+        <div class="row-3" style="margin-top:12px;">
+          <div>
+            <label>PONYTAIL LEVEL</label>
+            <select id="taste-ponytail">
+              <option value="ultra">ultra (Push back + Minimal code)</option>
+              <option value="full">full (Minimal code)</option>
+              <option value="lite">lite (Standard)</option>
+            </select>
+          </div>
+          <div>
+            <label>DESIGN VARIANCE (1-10)</label>
+            <input id="taste-variance" type="number" min="1" max="10" value="8" />
+          </div>
+          <div>
+            <label>VISUAL DENSITY (1-10)</label>
+            <input id="taste-density" type="number" min="1" max="10" value="8" />
+          </div>
+        </div>
+        <div style="margin-top:10px;">
+          <label>ADD NEW LEARNED TASTE RULE / CORRECTION</label>
+          <div class="row-2">
+            <input id="taste-new-rule" placeholder="e.g. Always run node --test before committing any file" />
+            <button class="btn" onclick="addTasteRuleUI()">+ ADD RULE TO TASTE CONTRACT</button>
+          </div>
+        </div>
+        <div id="taste-rules-list" class="terminal-log" style="height:130px;margin-top:10px;"></div>
+
+        <div class="section-head" style="margin-top:18px;">
+          <h2>[ SELF-IMPROVISE HARNESS STUDIO (GIT CHECKPOINT PROTECTED) ]</h2>
+          <span class="section-tag">AUTONOMOUS EVOLUTION</span>
+        </div>
+        <div style="margin-top:10px;">
+          <label>DESCRIBE NEW FEATURE OR IMPROVEMENT FOR THIS HARNESS (/home/aswath/agy-orchestrator)</label>
+          <textarea id="improvise-input" rows="2" placeholder="e.g. Add a new CLI subcommand orch benchmark that compares Gemini 4 Argon vs Claude Opus 5.5 latency..."></textarea>
+          <button class="btn btn-red" style="margin-top:8px;" onclick="improviseHarnessUI()">>>> SNAPSHOT GIT &amp; SELF-EVOLVE HARNESS</button>
+        </div>
+      </div>
+
+      <!-- TAB 06: PHONE & REMOTE AUTOMATION BRIDGE -->
+      <div id="tab-phone" class="tab-pane hidden">
+        <div class="section-head">
+          <h2>[ 06 // PHONE &amp; CLOUD NOTES BI-DIRECTIONAL AUTOMATION ]</h2>
+          <span class="section-tag">ONEDRIVE + NTFY.SH + AGY REMOTE</span>
+        </div>
+        <div class="matrix-grid" style="margin-top:12px;">
+          <div class="matrix-cell">
+            <strong>CHANNEL A // CLOUD NOTES INBOX (ONEDRIVE / KEEP)</strong>
+            <div style="color:var(--fg-muted);">Watches markdown task list synced from your phone:</div>
+            <code id="phone-inbox-path" style="color:var(--fg-phosphor);word-break:break-all;">/mnt/c/Users/aswat/OneDrive/Orch-Phone-Inbox.md</code>
+            <button class="btn btn-red" style="margin-top:6px;" onclick="scanPhoneInboxUI()">>>> SCAN &amp; RUN PHONE INBOX NOW</button>
+          </div>
+          <div class="matrix-cell">
+            <strong>CHANNEL B // NTFY.SH PHONE PUSH &amp; COMMAND TOPIC</strong>
+            <label>INCOMING COMMAND TOPIC (SEND FROM PHONE)</label>
+            <input id="phone-ntfy-in" value="agy-orch-aswath-cmd-9842" />
+            <label>OUTGOING RESULT TOPIC (SUBSCRIBE ON PHONE)</label>
+            <input id="phone-ntfy-out" value="agy-orch-aswath-out-9842" />
+            <div style="display:flex;gap:6px;margin-top:6px;">
+              <button class="btn" onclick="savePhoneConfigUI()">SAVE TOPICS</button>
+              <button class="btn" onclick="testPhonePushUI()">SEND TEST PUSH</button>
+            </div>
+          </div>
+          <div class="matrix-cell">
+            <strong>CHANNEL C // NATIVE AGY REMOTE-CONTROL DAEMON</strong>
+            <div style="color:var(--fg-muted);">Control AGY CLI sessions directly from mobile:</div>
+            <div style="display:flex;gap:6px;margin-top:8px;">
+              <button class="btn" onclick="agyRemoteUI('start')">START DAEMON</button>
+              <button class="btn" onclick="agyRemoteUI('status')">STATUS</button>
+              <button class="btn" onclick="agyRemoteUI('stop')">STOP</button>
+            </div>
+            <div id="agy-remote-status" style="margin-top:6px;color:var(--fg-muted);">Status: Ready</div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- RIGHT COLUMN: LIVE TELEMETRY STREAM & ACTIVE TOPOLOGY OVERVIEW -->
+    <aside class="panel">
+      <div class="section-head">
+        <h2>[ LIVE TELEMETRY &amp; SSE EVENT STREAM ]</h2>
+        <span class="section-tag">REAL-TIME BUS</span>
+      </div>
+      <div id="live-sse-stream" class="terminal-log">[SYSTEM] Connected to Orchestrator EventBus...</div>
+
+      <div class="section-head">
+        <h2>[ CURRENT DUAL-CATEGORY ROSTER MATRIX ]</h2>
+        <span class="section-tag">GEMINI + CLAUDE/GPT</span>
+      </div>
+      <div id="right-roster-summary" class="matrix-grid"></div>
+    </aside>
+  </main>
+
+  <script>
+    let STATE = null;
+
+    function switchTab(tabId, btnEl) {
+      document.querySelectorAll('.tab-pane').forEach(el => el.classList.add('hidden'));
+      document.getElementById(tabId).classList.remove('hidden');
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      if (btnEl) btnEl.classList.add('active');
+    }
+
+    function appendLog(line) {
+      const box = document.getElementById('live-sse-stream');
+      const ts = new Date().toISOString().slice(11, 19);
+      box.textContent = `[${ts}] ${line}\n` + box.textContent.slice(0, 12000);
+    }
+
+    async function apiPost(endpoint, payload) {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      return res.json();
+    }
+
+    async function refreshState() {
+      const res = await fetch('/api/state');
+      const data = await res.json();
+      if (!data.ok) return;
+      STATE = data;
+      renderState(data);
+    }
+
+    function renderState(data) {
+      const leader = data.topology.leader;
+      document.getElementById('header-leader-readout').textContent =
+        `LEADER: ${leader.surface.toUpperCase()} // ${leader.model}`;
+      document.getElementById('leader-current-text').textContent =
+        `${leader.surface} :: ${leader.model} [effort=${leader.effort || 'high'}]`;
+      document.getElementById('leader-cat-badge').textContent = leader.category.toUpperCase();
+      document.getElementById('leader-surface').value = leader.surface;
+      document.getElementById('leader-effort').value = leader.effort || 'high';
+
+      // Populate model selector with both Gemini and Claude/GPT models + default
+      const modelSel = document.getElementById('leader-model');
+      const allModels = [
+        ...data.catalog.gemini,
+        ...data.catalog['claude-gpt'],
+        { id: 'default', label: 'default (for cmdc / mcode)', category: 'external' },
+      ];
+      modelSel.innerHTML = allModels
+        .map(m => `<option value="${m.id}" ${m.id === leader.model ? 'selected' : ''}>[${m.category}] ${m.id}</option>`)
+        .join('');
+
+      if (data.themes?.wsl) {
+        document.getElementById('global-theme-select').value = data.themes.wsl;
+      }
+
+      // Render Subagents Grid with one-click Swap to Leader
+      const subGrid = document.getElementById('subagents-grid');
+      const entries = Object.entries(data.topology.subagents || {});
+      subGrid.innerHTML = entries.map(([id, w]) => {
+        const badgeClass = w.category === 'gemini' ? 'badge-gemini' : 'badge-claude';
+        return `
+          <div class="matrix-cell">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <strong>${id}</strong>
+              <span class="badge ${badgeClass}">${w.category}</span>
+            </div>
+            <div>SURFACE: <b>${w.surface}</b></div>
+            <div>MODEL: <b>${w.model}</b> (${w.effort || 'medium'})</div>
+            <div style="color:var(--fg-muted);font-size:10px;">TAGS: ${(w.specialties || []).join(', ')}</div>
+            <div style="display:flex;gap:6px;margin-top:6px;">
+              <button class="btn btn-red" style="padding:5px 8px;font-size:10px;" onclick="swapWithLeaderUI('${id}')">PROMOTE / SWAP LEADER</button>
+              <button class="btn" style="padding:5px 8px;font-size:10px;" onclick="removeWorkerUI('${id}')">REMOVE</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Right sidebar compact summary
+      document.getElementById('right-roster-summary').innerHTML = `
+        <div class="matrix-cell leader-highlight">
+          <strong>MAIN LEADER</strong>
+          <div>${leader.surface} : ${leader.model}</div>
+          <span class="badge">${leader.category}</span>
+        </div>
+        <div class="matrix-cell">
+          <strong>EGM GOLDFISH CRITIC</strong>
+          <div>${data.topology.goldfishCritic.surface} : ${data.topology.goldfishCritic.model}</div>
+          <span class="badge">${data.topology.goldfishCritic.category}</span>
+        </div>
+        <div class="matrix-cell">
+          <strong>THINKING ROUTER</strong>
+          <div>${data.topology.router.surface} : ${data.topology.router.model}</div>
+        </div>
+        <div class="matrix-cell">
+          <strong>HYBRID MEMORY STATS</strong>
+          <div>CLAUDE-MEM: ${data.memory.claudeMemObservations} obs</div>
+          <div>ORCH-MEM: ${data.memory.localMemories} items</div>
+        </div>
+      `;
+
+      // Memory stats badge
+      document.getElementById('mem-stats-badge').textContent =
+        `CLAUDE-MEM: ${data.memory.claudeMemObservations} OBS // LOCAL: ${data.memory.localMemories}`;
+      document.getElementById('skills-count-badge').textContent =
+        `${data.skillsCount} INDEXED SKILLS`;
+
+      // Bandit arms
+      const arms = Object.entries(data.bandit?.arms || {});
+      document.getElementById('bandit-arms-grid').innerHTML = arms.length
+        ? arms.map(([k, a]) => `
+            <div class="matrix-cell">
+              <strong>${k}</strong>
+              <div>POSTERIOR: alpha=${a.alpha} / beta=${a.beta}</div>
+              <div>EXPECTED REWARD: <b>${(a.expectedReward * 100).toFixed(1)}%</b> (pulls=${a.pulls})</div>
+              <div style="color:var(--fg-muted);">AVG LATENCY: ${a.avgLatencyMs}ms</div>
+            </div>
+          `).join('')
+        : '<div class="matrix-cell">No bandit pulls recorded yet. Execute a run to update Beta(alpha, beta) posteriors.</div>';
+
+      // Taste rules
+      document.getElementById('taste-rules-list').textContent =
+        (data.taste?.customRules || []).map((r, i) => `[RULE 0${i + 1}] ${r}`).join('\n');
+    }
+
+    async function setLeaderFromUI() {
+      const surface = document.getElementById('leader-surface').value;
+      const model = document.getElementById('leader-model').value;
+      const effort = document.getElementById('leader-effort').value;
+      await apiPost('/api/topology', {
+        action: 'set-leader',
+        spec: `${surface}:${model}`,
+        effort,
+      });
+      appendLog(`Switched Main Leader -> ${surface}:${model} (${effort})`);
+      await refreshState();
+    }
+
+    async function swapWithLeaderUI(subId) {
+      await apiPost('/api/topology', { action: 'swap', subagentId: subId });
+      appendLog(`Swapped Main Leader with Subagent [${subId}]`);
+      await refreshState();
+    }
+
+    async function upsertWorkerUI() {
+      const id = document.getElementById('new-worker-id').value.trim();
+      const spec = document.getElementById('new-worker-spec').value.trim();
+      const specialties = document.getElementById('new-worker-spec-tags').value
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean);
+      if (!id || !spec) return;
+      await apiPost('/api/topology', { action: 'upsert-worker', id, spec, specialties });
+      appendLog(`Upserted Worker [${id}] -> ${spec}`);
+      await refreshState();
+    }
+
+    async function removeWorkerUI(id) {
+      await apiPost('/api/topology', { action: 'remove-worker', id });
+      appendLog(`Removed Worker [${id}]`);
+      await refreshState();
+    }
+
+    async function dispatchTaskUI() {
+      const prompt = document.getElementById('task-prompt').value.trim();
+      if (!prompt) return;
+      const mode = document.getElementById('task-mode').value || null;
+      const sessionId = document.getElementById('task-session').value.trim() || 'default';
+      const dryRun = document.getElementById('task-dryrun').value === 'true';
+
+      const outBox = document.getElementById('dispatch-result-box');
+      outBox.textContent = `>>> DISPATCHING TO ORCHESTRATOR [mode=${mode || 'adaptive'}, dryRun=${dryRun}]...\n`;
+      const res = await apiPost('/api/run', { prompt, mode, sessionId, dryRun });
+      outBox.textContent = JSON.stringify(res, null, 2);
+      await refreshState();
+    }
+
+    async function previewRouteUI() {
+      const prompt = document.getElementById('task-prompt').value.trim();
+      if (!prompt) return;
+      const res = await apiPost('/api/skills/route', { prompt, maxSkills: 5 });
+      document.getElementById('dispatch-result-box').textContent = JSON.stringify(res, null, 2);
+    }
+
+    async function searchMemoryUI() {
+      const query = document.getElementById('mem-search-input').value.trim();
+      const res = await apiPost('/api/memory/search', { query, limit: 8, includeClaudeMem: true });
+      const grid = document.getElementById('mem-results-grid');
+      grid.innerHTML = (res.results || []).map(r => `
+        <div class="matrix-cell">
+          <div style="display:flex;justify-content:space-between;">
+            <strong>${r.title}</strong>
+            <span class="badge">${r.source}</span>
+          </div>
+          <div style="color:var(--accent-red);font-size:10px;">
+            RRF=${r.rrfScore} | BM25_RANK=${r.bm25Rank || '-'} | COSINE=${r.cosineSim || 0}
+          </div>
+          <div style="color:var(--fg-muted);">${String(r.content || '').slice(0, 220)}</div>
+        </div>
+      `).join('') || '<div class="matrix-cell">No matching memories found.</div>';
+    }
+
+    async function storeMemoryUI() {
+      const title = document.getElementById('mem-new-title').value.trim();
+      const content = document.getElementById('mem-new-content').value.trim();
+      const tags = document.getElementById('mem-new-tags').value.split(',').map(s => s.trim()).filter(Boolean);
+      if (!title || !content) return;
+      await apiPost('/api/memory/store', { title, content, tags, tier: 'global' });
+      appendLog(`Stored new global memory: ${title}`);
+      await refreshState();
+    }
+
+    async function testSkillRouterUI() {
+      const prompt = document.getElementById('router-test-input').value.trim();
+      if (!prompt) return;
+      const res = await apiPost('/api/skills/route', { prompt, maxSkills: 6 });
+      const grid = document.getElementById('router-output-grid');
+      grid.innerHTML = (res.selectedSkills || []).map(s => `
+        <div class="matrix-cell">
+          <strong>SKILL // ${s.name}</strong>
+          <div style="color:var(--accent-red);font-size:10px;">
+            RRF=${s.rrfScore} | BM25=${s.bm25Score} | COSINE=${s.cosineSim}
+          </div>
+          <div style="color:var(--fg-muted);">${s.description}</div>
+        </div>
+      `).join('');
+    }
+
+    async function installSkillUI() {
+      const query = document.getElementById('skill-install-pkg').value.trim();
+      if (!query) return;
+      appendLog(`Installing skill via npx skills: ${query}...`);
+      const res = await apiPost('/api/skills/install', { query });
+      appendLog(`Skill install result: ${JSON.stringify(res)}`);
+      await refreshState();
+    }
+
+    async function addTasteRuleUI() {
+      const rule = document.getElementById('taste-new-rule').value.trim();
+      if (!rule) return;
+      await apiPost('/api/taste', { addRule: rule });
+      document.getElementById('taste-new-rule').value = '';
+      appendLog(`Added Taste Rule: ${rule}`);
+      await refreshState();
+    }
+
+    async function improviseHarnessUI() {
+      const featureRequest = document.getElementById('improvise-input').value.trim();
+      if (!featureRequest) return;
+      appendLog(`Creating git snapshot & running Self-Improvise: ${featureRequest}`);
+      const res = await apiPost('/api/improvise', { featureRequest, dryRun: false });
+      appendLog(`Self-Improvise completed [checkpoint=${res.checkpointCommit || 'none'}]`);
+    }
+
+    async function applyGlobalTheme(scheme) {
+      await apiPost('/api/theme', { scheme, targets: ['wsl', 'win'] });
+      appendLog(`Synced AGY CLI Theme across WSL & Windows -> "${scheme}"`);
+    }
+
+    async function scanPhoneInboxUI() {
+      const res = await apiPost('/api/phone', { action: 'process-inbox' });
+      appendLog(`Scanned Phone Inbox -> Executed ${res.executedCount || 0} task(s)`);
+    }
+
+    async function savePhoneConfigUI() {
+      const topicIn = document.getElementById('phone-ntfy-in').value.trim();
+      const topicOut = document.getElementById('phone-ntfy-out').value.trim();
+      await apiPost('/api/phone', {
+        action: 'update-config',
+        config: { channels: { ntfy: { enabled: true, serverUrl: 'https://ntfy.sh', topicIn, topicOut } } },
+      });
+      appendLog(`Updated ntfy topics: IN=${topicIn}, OUT=${topicOut}`);
+    }
+
+    async function testPhonePushUI() {
+      const res = await apiPost('/api/phone', {
+        action: 'notify',
+        title: 'AGY Orchestrator Telemetry Ping',
+        message: 'Phone bridge is online and listening for your tasks.',
+      });
+      appendLog(`Sent test push notification -> ${JSON.stringify(res)}`);
+    }
+
+    async function agyRemoteUI(subcommand) {
+      const res = await apiPost('/api/phone', { action: 'remote-control', subcommand });
+      document.getElementById('agy-remote-status').textContent = res.output || res.error || 'Done';
+    }
+
+    // Connect SSE Stream
+    const evtSource = new EventSource('/api/events');
+    evtSource.onmessage = (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        if (data.type === 'stream_chunk') {
+          appendLog(`[${data.agentId}] ${data.chunk.trim()}`);
+        } else {
+          appendLog(`${data.type.toUpperCase()} :: ${JSON.stringify(data)}`);
+        }
+      } catch {}
+    };
+
+    refreshState();
+  </script>
+</body>
+</html>
