@@ -107,6 +107,13 @@ Full benchmark report: [`eval/REPORT.md`](./eval/REPORT.md) | Raw metrics: [`eva
 
 ---
 
+## Build Studio, Live Diagram & `orch code` shell
+
+The harness no longer fires on a single prompt. Every goal goes through **clarify -> plan -> human approval -> build -> live preview -> chat changes**:
+
+- **Web**: open `orch ui`, sidebar `00 BUILD STUDIO` (dialogue + question cards, plan checklist with progress bar, live preview iframe, change-chat) and `09 LIVE SYSTEM DIAGRAM` (top-to-bottom flow whose nodes light up from the SSE bus). Dark and light themes via the sidebar toggle.
+- **Terminal**: `orch code` is an interactive agent shell (like Claude Code / Hermes): type a goal, answer numbered questions, approve the plan, watch a live progress bar, then keep typing to apply changes. Slash commands: `/status /leader /swap /mode /dry /plan /spec /preview /files /sessions /resume /memory /remember /teach /skills /theme /eval /ui`, and `!cmd` runs a shell command in the project workspace. One-shot: `orch code -p "goal"` (defaults + auto-approve). Add `--live` to use real CLI agents instead of simulated ones.
+
 ## Verification Suite
 
 Run the full zero-dependency test suite (`12/12` tests passing via `node:test`):
