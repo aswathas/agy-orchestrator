@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "enabled": true,
+  "pollIntervalMs": 6000,
+  "channels": {
+    "cloudNotesInbox": {
+      "enabled": true,
+      "inboxPath": "/mnt/c/Users/aswat/OneDrive/Orch-Phone-Inbox.md",
+      "secondaryInboxPath": "/home/aswath/agy-orchestrator/memory/Phone-Inbox.md"
+    },
+    "ntfy": {
+      "enabled": true,
+      "serverUrl": "https://ntfy.sh",
+      "topicIn": "agy-orch-aswath-cmd-9842",
+      "topicOut": "agy-orch-aswath-out-9842"
+    },
+    "telegram": {
+      "enabled": false,
+      "botToken": "",
+      "allowedChatIds": []
+    },
+    "agyRemoteControl": {
+      "enabled": false
+    }
+  }
+}
