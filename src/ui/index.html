@@ -937,6 +937,7 @@
               <div class="panel-title">NEW BUILD // DESCRIBE WHAT YOU WANT (I WILL ASK BEFORE BUILDING)</div>
               <div class="btn-row">
                 <select id="studioSessionSelect" style="width:220px;" onchange="studioOpen(this.value)"><option value="">— sessions —</option></select>
+                <select id="studioStepMode" style="width:160px;" onchange="studioSetStepMode(this.value)"><option value="continuous">CONTINUOUS RUN</option><option value="step-by-step">STEP-BY-STEP GATE</option></select>
                 <select id="studioDryRun" style="width:170px;"><option value="true">SIMULATED AGENTS</option><option value="false">LIVE CLI AGENTS</option></select>
               </div>
             </div>
@@ -968,12 +969,27 @@
                 <iframe id="studioPreviewFrame" class="preview-frame" sandbox="allow-scripts allow-forms"></iframe>
               </div>
               <div class="panel">
-                <div class="panel-header"><div class="panel-title">BUILD PLAN & PROGRESS</div><span class="badge badge-working" id="studioPctBadge">0%</span></div>
+                <div class="panel-header">
+                  <div class="panel-title">BUILD PLAN & PROGRESS</div>
+                  <div class="btn-row">
+                    <span class="badge" id="studioStepModeBadge">CONTINUOUS</span>
+                    <span class="badge badge-working" id="studioPctBadge">0%</span>
+                  </div>
+                </div>
                 <div class="panel-body">
                   <div class="progress-track"><div class="progress-fill" id="studioProgressBar"></div></div>
                   <div id="studioPlanList" class="mono" style="display:flex; flex-direction:column; gap:6px;"></div>
-                  <div class="btn-row"><button class="btn btn-green" id="studioApproveBtn" onclick="studioApprove()" disabled>✓ APPROVE & BUILD</button></div>
-                  <details><summary class="field-label" style="cursor:pointer;">SPEC (what the agents will receive)</summary><div class="terminal-box" id="studioSpecBox" style="max-height:200px;"></div></details>
+                  <div class="btn-row">
+                    <button class="btn btn-green" id="studioApproveBtn" onclick="studioApprove()" disabled>✓ APPROVE & BUILD</button>
+                    <button class="btn btn-primary" id="studioStepApproveBtn" onclick="studioStepApprove()" style="display:none;">▶ APPROVE NEXT STEP</button>
+                  </div>
+                  <details><summary class="field-label" style="cursor:pointer;">SPEC (what the agents will receive)</summary><div class="terminal-box" id="studioSpecBox" style="max-height:160px;"></div></details>
+                  <details open><summary class="field-label" style="cursor:pointer;">WORKSPACE FILES & VISUAL DIFFS</summary>
+                    <div style="display:grid; grid-template-columns:180px 1fr; gap:8px; margin-top:6px;">
+                      <div id="studioFileTree" style="background:var(--bg-input); border:1px solid var(--border-hairline); padding:6px; max-height:180px; overflow-y:auto; font-family:'JetBrains Mono', monospace; font-size:10px;"></div>
+                      <div class="terminal-box" id="studioDiffViewer" style="max-height:180px; font-size:10px;">Select a file to inspect or view unified diffs.</div>
+                    </div>
+                  </details>
                 </div>
               </div>
             </div>
@@ -2519,9 +2535,54 @@
       const prompt = document.getElementById('studioStartInput').value.trim();
       if (!prompt) return;
       const dryRun = document.getElementById('studioDryRun').value === 'true';
-      const d = await jpost('/api/studio/start', { prompt, dryRun });
+      const stepMode = document.getElementById('studioStepMode')?.value || 'continuous';
+      const d = await jpost('/api/studio/start', { prompt, dryRun, stepMode });
       if (d.ok) { document.getElementById('studioStartInput').value = ''; studioRender(d.session); studioListSessions(); }
       else alert(d.error);
+    }
+    async function studioSetStepMode(val) {
+      if (!STUDIO) return;
+      const d = await jpost(`/api/studio/${STUDIO.id}/step-mode`, { stepMode: val });
+      if (d.ok) studioRender(d.session);
+    }
+    async function studioStepApprove() {
+      if (!STUDIO) return;
+      const d = await jpost(`/api/studio/${STUDIO.id}/step-approve`);
+      if (d.ok) studioRender(d.session);
+    }
+    async function studioLoadFilesAndDiffs() {
+      if (!STUDIO) return;
+      const [filesRes, diffsRes] = await Promise.all([
+        fetch(`/api/studio/${STUDIO.id}/files`).then((r) => r.json()),
+        fetch(`/api/studio/${STUDIO.id}/diffs`).then((r) => r.json()),
+      ]);
+
+      const treeEl = document.getElementById('studioFileTree');
+      const files = filesRes.files || [];
+      if (!files.length) {
+        treeEl.innerHTML = '<span style="color:var(--fg-muted);">No files generated yet</span>';
+      } else {
+        const renderNodes = (nodes) =>
+          nodes.map((n) => `
+            <div style="cursor:pointer; padding:2px 0;" onclick="studioInspectFile('${n.path}')">
+              ${n.type === 'directory' ? '📁' : '📄'} ${n.name}
+              ${n.children ? `<div style="padding-left:12px;">${renderNodes(n.children)}</div>` : ''}
+            </div>
+          `).join('');
+        treeEl.innerHTML = renderNodes(files);
+      }
+
+      const diffs = diffsRes.diffs || [];
+      const diffViewer = document.getElementById('studioDiffViewer');
+      if (diffs.length > 0) {
+        diffViewer.textContent = diffs.map((d) => `=== ${d.file} [${d.type}] (+${d.additions} -${d.deletions}) ===\n${d.patch}`).join('\n\n');
+      }
+    }
+    async function studioInspectFile(filePath) {
+      if (!STUDIO || !filePath) return;
+      const res = await fetch(`/api/studio/${STUDIO.id}/file?path=${encodeURIComponent(filePath)}`).then((r) => r.json());
+      const diffViewer = document.getElementById('studioDiffViewer');
+      diffViewer.textContent = res.content !== null ? `// ${filePath}\n\n${res.content}` : `File not found: ${filePath}`;
     }
     async function studioOpen(id) {
       if (!id) return;
@@ -2588,8 +2649,14 @@
         : '<div style="color:var(--fg-muted);">Plan appears after you confirm the answers.</div>';
       document.getElementById('studioSpecBox').textContent = s.spec || '';
       document.getElementById('studioApproveBtn').disabled = s.state !== 'awaiting_approval';
-      document.getElementById('navBadgeStudio').textContent = s.state === 'building' ? `${Math.round(s.progressPct)}%` : s.state.slice(0, 5).toUpperCase();
+      const stepBtn = document.getElementById('studioStepApproveBtn');
+      if (stepBtn) {
+        stepBtn.style.display = s.state === 'step_paused' ? 'inline-block' : 'none';
+      }
+      document.getElementById('studioStepModeBadge').textContent = (s.stepMode || 'continuous').toUpperCase();
+      document.getElementById('navBadgeStudio').textContent = s.state === 'building' ? `${Math.round(s.progressPct)}%` : s.state === 'step_paused' ? 'PAUSED' : s.state.slice(0, 5).toUpperCase();
       studioRenderQuestions();
+      studioLoadFilesAndDiffs();
       if (s.state !== STUDIO_LAST_STATE || s.state === 'building') {
         if (['awaiting_approval', 'building', 'preview'].includes(s.state)) studioReloadPreview();
       }

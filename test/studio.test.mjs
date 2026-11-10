@@ -21,13 +21,13 @@ test('Studio: clarify -> plan -> approve -> build -> preview -> chat change, wit
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'orch-studio-'));
   const studio = new StudioManager({ engine, dir });
 
-  const s = studio.start('Build a dashboard UI for my repos', { dryRun: true, mode: 'single' });
+  const s = await studio.start('Build a dashboard UI for my repos', { dryRun: true, mode: 'single' });
   assert.equal(s.state, 'clarifying');
-  assert.ok(s.questions.some((q) => q.id === 'design'), 'UI task must ask a design question');
+  assert.ok(s.questions.some((q) => q.id === 'visual_language'), 'UI task must ask a visual design question');
 
-  studio.answer(s.id, { stack: 'Python' });
+  studio.answer(s.id, { architecture_pattern: 'Layered Monolith' });
   assert.equal(s.state, 'awaiting_approval');
-  assert.match(s.spec, /stack:\*\* Python/);
+  assert.match(s.spec, /architecture_pattern:\*\* Layered Monolith/);
   assert.throws(() => studio.approve('st-nope'), /Unknown/);
 
   studio.chat(s.id, 'make it dark only');

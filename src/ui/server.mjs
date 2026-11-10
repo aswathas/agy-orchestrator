@@ -47,7 +47,7 @@ export async function startDashboardServer({
   host = '127.0.0.1',
 }) {
   const sseClients = new Set();
-  const studio = new StudioManager({ engine });
+  const studio = new StudioManager({ engine, phoneBridge });
 
   const onEngineEvent = (ev) => {
     const msg = `data: ${JSON.stringify(ev)}\n\n`;
@@ -310,15 +310,32 @@ export async function startDashboardServer({
         if (!String(b.prompt || '').trim()) throw new Error('prompt required');
         return sendJson(res, 200, { ok: true, session: studio.start(b.prompt.trim(), { dryRun: b.dryRun !== false, mode: b.mode || 'egm' }) });
       }
-      const sm = path.match(/^\/api\/studio\/(st-[a-z0-9]+)(?:\/(answer|approve|chat))?$/);
+      const sm = path.match(/^\/api\/studio\/(st-[a-z0-9]+)(?:\/(answer|approve|chat|step-approve|files|file|diffs|step-mode))?$/);
       if (sm) {
         const [, sid, action] = sm;
         if (req.method === 'GET' && !action) return sendJson(res, 200, { ok: true, session: studio.get(sid) });
+        if (req.method === 'GET' && action === 'files') {
+          const diffEngine = studio.getDiffEngine(sid);
+          return sendJson(res, 200, { ok: true, files: diffEngine.scanTree() });
+        }
+        if (req.method === 'GET' && action === 'diffs') {
+          const s = studio.get(sid);
+          return sendJson(res, 200, { ok: true, diffs: s.diffs || [] });
+        }
+        if (req.method === 'GET' && action === 'file') {
+          const filePath = url.searchParams.get('path');
+          if (!filePath) throw new Error('Missing path parameter');
+          const diffEngine = studio.getDiffEngine(sid);
+          const content = diffEngine.readFileContent(filePath);
+          return sendJson(res, 200, { ok: true, path: filePath, content });
+        }
         if (req.method === 'POST') {
           const b = await readBody(req);
           const session =
             action === 'answer' ? studio.answer(sid, b.answers)
             : action === 'approve' ? studio.approve(sid)
+            : action === 'step-approve' ? studio.stepApprove(sid)
+            : action === 'step-mode' ? studio.setStepMode(sid, b.stepMode)
             : action === 'chat' ? studio.chat(sid, String(b.message || '').trim())
             : null;
           if (session) return sendJson(res, 200, { ok: true, session });

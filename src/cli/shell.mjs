@@ -17,16 +17,23 @@ const red = (s) => c('31', s);
 
 const HELP = `
 ${bold('Talk to build')}
-  just type a goal            starts a dialogue: questions -> plan -> approve -> build -> preview
-  (after a build) type text   applies it as a change request to the same project
-${bold('Slash commands')}
+  just type a goal            starts LLM brainstorming -> questions -> plan -> approve -> build -> preview
+  (after a build) type text   applies it as an incremental change request to the workspace
+${bold('Claude Code Style Commands')}
+  /step                       approve next step in step-by-step mode
+  /stepmode continuous|step-by-step  toggle step gating mode
+  /diff                       view workspace unified diff
+  /files                      list files generated in workspace
+  /view <file>                inspect file content
+  /hooks                      inspect Claude Code hook execution history
+${bold('Harness Controls')}
   /status                     leader, critic, workers, memory, skills
   /leader <surface:model>     switch Main Leader (critic flips to opposite family)
   /swap <workerId>            swap Leader with a subagent
   /mode egm|full|single|adaptive   execution mode for builds
   /dry on|off                 simulated agents vs live CLI agents
   /plan   /spec               show current plan / spec
-  /preview   /files           preview URL + workspace files
+  /preview                    preview URL + workspace files
   /sessions   /resume <id>   /new
   /memory <query>             hybrid RRF memory search
   /remember <fact>            pin a fact to global memory
@@ -124,7 +131,7 @@ export class OrchCodeShell {
   /** Non-interactive: defaults for every question, auto-approve, print final output. */
   async runOnce(prompt) {
     this.engine.events.on('event', () => {});
-    const s = this.studio.start(prompt, { dryRun: this.dryRun, mode: this.mode });
+    const s = await this.studio.start(prompt, { dryRun: this.dryRun, mode: this.mode, stepMode: 'continuous' });
     this.session = s;
     this.studio.answer(s.id, {});
     this.studio.approve(s.id);
@@ -166,7 +173,7 @@ export class OrchCodeShell {
   }
 
   async dialogue(prompt) {
-    const s = this.studio.start(prompt, { dryRun: this.dryRun, mode: this.mode });
+    const s = await this.studio.start(prompt, { dryRun: this.dryRun, mode: this.mode, stepMode: 'continuous' });
     this.session = s;
     this.printTail(s, 1);
     await this.questions(s);
@@ -257,12 +264,63 @@ export class OrchCodeShell {
       case '/dry': this.dryRun = arg !== 'off'; if (this.session) this.session.dryRun = this.dryRun; console.log(green(`agents ${this.dryRun ? 'SIMULATED' : 'LIVE'}`)); break;
       case '/plan': if (!this.session) return console.log(dim('no session')); this.session.plan.forEach((p, i) => console.log(`${i + 1}. [${p.status}] ${p.title}`)); break;
       case '/spec': console.log(this.session?.spec || dim('no spec yet')); break;
-      case '/preview':
+      case '/preview': {
+        if (!this.session) return console.log(dim('no session'));
+        console.log(`preview http://127.0.0.1:${this.port}/preview/${this.session.id}/`);
+        break;
+      }
+      case '/step': {
+        if (!this.session) return console.log(dim('no session'));
+        this.studio.stepApprove(this.session.id);
+        console.log(green('Approved step. Resuming execution...'));
+        break;
+      }
+      case '/stepmode': {
+        if (!this.session) return console.log(dim('no session'));
+        const nextMode = arg === 'step-by-step' ? 'step-by-step' : 'continuous';
+        this.studio.setStepMode(this.session.id, nextMode);
+        console.log(green(`Step mode set to ${nextMode}`));
+        break;
+      }
+      case '/diff': {
+        if (!this.session) return console.log(dim('no session'));
+        const diffs = this.session.diffs || [];
+        if (!diffs.length) return console.log(dim('No file diffs recorded yet.'));
+        for (const d of diffs) {
+          console.log(`\n${bold(d.file)} [${d.type}] (+${d.additions} -${d.deletions})`);
+          console.log(d.patch ? dim(d.patch) : '');
+        }
+        break;
+      }
       case '/files': {
         if (!this.session) return console.log(dim('no session'));
-        const ws = join(this.studio.dir, this.session.id, 'workspace');
-        console.log(`preview http://127.0.0.1:${this.port}/preview/${this.session.id}/`);
-        for (const f of existsSync(ws) ? readdirSync(ws) : []) console.log(`  ${f}${statSync(join(ws, f)).isDirectory() ? '/' : ''}`);
+        const diffEngine = this.studio.getDiffEngine(this.session.id);
+        const files = diffEngine.scanTree();
+        console.log(bold(`Workspace Files (${files.length}):`));
+        const printTree = (nodes, indent = '  ') => {
+          for (const n of nodes) {
+            console.log(`${indent}${n.type === 'directory' ? cyan(n.name + '/') : n.name} ${dim(n.size ? n.size + 'B' : '')}`);
+            if (n.children) printTree(n.children, indent + '  ');
+          }
+        };
+        printTree(files);
+        break;
+      }
+      case '/view': {
+        if (!this.session) return console.log(dim('no session'));
+        if (!arg) return console.log(red('Usage: /view <relative-path>'));
+        const diffEngine = this.studio.getDiffEngine(this.session.id);
+        const content = diffEngine.readFileContent(arg);
+        if (content === null) return console.log(red(`File not found: ${arg}`));
+        console.log(dim(`=== ${arg} ===\n`) + content);
+        break;
+      }
+      case '/hooks': {
+        const hist = this.studio.hooks.history || [];
+        console.log(bold(`Hook Execution History (${hist.length}):`));
+        for (const h of hist.slice(0, 15)) {
+          console.log(`[${h.timestamp.slice(11, 19)}] ${cyan(h.hook)} :: ${h.name} (${h.status}, ${h.durationMs}ms)`);
+        }
         break;
       }
       case '/sessions': this.studio.list().forEach((s) => console.log(`${s.id}  ${s.state.padEnd(18)} ${s.title}`)); break;
